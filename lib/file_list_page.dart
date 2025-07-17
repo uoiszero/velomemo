@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'video_thumbnail_manager.dart';
 import 'video_thumbnail_widget.dart';
 
@@ -442,7 +443,7 @@ class _FileListPageState extends State<FileListPage> {
   void _handleFileAction(String action, File file) {
     switch (action) {
       case 'play':
-        _showMessage('播放功能正在开发中...');
+        _playVideoFile(file);
         break;
       case 'share':
         _showMessage('分享功能正在开发中...');
@@ -450,6 +451,79 @@ class _FileListPageState extends State<FileListPage> {
       case 'delete':
         _showDeleteConfirmDialog(file);
         break;
+    }
+  }
+  
+  /// 使用系统默认播放器播放视频文件
+  Future<void> _playVideoFile(File file) async {
+    try {
+      // 检查文件是否存在
+      if (!await file.exists()) {
+        _showMessage('文件不存在或已被删除');
+        return;
+      }
+      
+      // 获取文件的绝对路径
+      final absolutePath = file.absolute.path;
+      print('尝试播放视频文件: $absolutePath');
+      
+      // 尝试多种URI格式
+      final List<Uri> urisToTry = [
+        // 标准文件URI
+        Uri.file(absolutePath),
+        // content URI格式（Android推荐）
+        Uri.parse('content://media/external/video/media'),
+        // 通用文件查看器
+        Uri.parse('file://$absolutePath'),
+      ];
+      
+      bool launched = false;
+      
+      for (final uri in urisToTry) {
+        try {
+          print('尝试URI: $uri');
+          
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(
+              uri,
+              mode: LaunchMode.externalApplication,
+            );
+            _showMessage('正在使用系统默认播放器打开视频...');
+            launched = true;
+            break;
+          }
+        } catch (e) {
+          print('URI $uri 启动失败: $e');
+          continue;
+        }
+      }
+      
+      if (!launched) {
+        // 尝试使用Android的ACTION_VIEW Intent
+        await _tryAndroidActionView(absolutePath);
+      }
+      
+    } catch (e) {
+      print('播放视频文件失败: $e');
+      _showMessage('视频播放失败: 可能是模拟器没有安装视频播放器或文件格式不支持');
+    }
+  }
+  
+  /// 尝试使用Android的ACTION_VIEW Intent
+  Future<void> _tryAndroidActionView(String filePath) async {
+    try {
+      // 构建通用的文件查看URI
+      final uri = Uri.parse('file://$filePath');
+      
+      // 尝试使用platformDefault模式
+      await launchUrl(
+        uri,
+        mode: LaunchMode.platformDefault,
+      );
+      _showMessage('正在尝试打开视频文件...');
+    } catch (e) {
+      print('Android ACTION_VIEW 失败: $e');
+      _showMessage('视频播放失败: 请确保设备上安装了视频播放器应用');
     }
   }
   
