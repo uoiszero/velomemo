@@ -11,6 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 import 'file_list_page.dart';
 import 'settings_page.dart';
+import 'speed_calculator.dart';
+import 'speed_display_widget.dart';
 
 /// 全局摄像头列表
 List<CameraDescription> cameras = [];
@@ -119,6 +121,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   
   // Platform Channel for native video segmentation
   static const platform = MethodChannel('com.example.velomemo/video_recorder');
+  
+  // 速度计算器
+  SpeedCalculator? _speedCalculator;
+  bool _isSpeedTrackingEnabled = false;
 
   @override
   void initState() {
@@ -141,6 +147,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     
     _initializeCamera();
     _startStorageMonitoring();
+    _initializeSpeedCalculator();
   }
 
   @override
@@ -151,6 +158,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _screenDimTimer?.cancel();
     _storageUpdateTimer?.cancel();
     _segmentTimer?.cancel();
+    
+    // 停止速度跟踪
+    _speedCalculator?.stop();
     
     // 恢复屏幕亮度
     await _restoreScreenBrightness();
@@ -189,6 +199,21 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       }
     } else {
       print('权限被拒绝 - 摄像头: $cameraStatus, 麦克风: $microphoneStatus, 存储: $storageStatus');
+    }
+  }
+  
+  /// 初始化速度计算器
+  Future<void> _initializeSpeedCalculator() async {
+    try {
+      _speedCalculator = SpeedCalculator.instance;
+      final success = await _speedCalculator!.initialize();
+      if (success) {
+        print('速度计算器初始化成功');
+      } else {
+        print('速度计算器初始化失败');
+      }
+    } catch (e) {
+      print('速度计算器初始化失败: $e');
     }
   }
   
@@ -851,6 +876,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       // 启动录制动画
       _recordingAnimationController.repeat(reverse: true);
       
+      // 启动速度跟踪（速度计算器在初始化时已自动启动）
+      if (_speedCalculator != null) {
+        setState(() {
+          _isSpeedTrackingEnabled = true;
+        });
+        print('速度跟踪已启动');
+      }
+      
       // 启动录制时间定时器
       _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (_isRecording && mounted) {
@@ -1005,6 +1038,15 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       // 恢复屏幕亮度
       await _restoreScreenBrightness();
       
+      // 停止速度跟踪
+      if (_speedCalculator != null && _isSpeedTrackingEnabled) {
+        _speedCalculator!.stop();
+        setState(() {
+          _isSpeedTrackingEnabled = false;
+        });
+        print('速度跟踪已停止');
+      }
+      
       setState(() {
         _isRecording = false;
         _recordingMessage = '录制已停止';
@@ -1145,6 +1187,18 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               // 存储空间和录制时长信息
               if (_showUI)
                 _buildStorageInfo(),
+
+              // 速度显示组件（录制时显示）
+              if (_isRecording && _isSpeedTrackingEnabled)
+                Positioned(
+                  top: 140,
+                  right: 20,
+                  child: SpeedDisplayWidget(
+                    showDetailedInfo: false,
+                    backgroundColor: Colors.black.withValues(alpha: 0.7),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
 
               // 半透明遮罩层，使前景内容更清晰
               if (_showUI)
