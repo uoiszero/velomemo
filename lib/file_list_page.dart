@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'video_thumbnail_manager.dart';
+import 'video_thumbnail_widget.dart';
 
 /// 文件列表页面
 class FileListPage extends StatefulWidget {
@@ -27,8 +29,20 @@ class _FileListPageState extends State<FileListPage> {
   @override
   void initState() {
     super.initState();
+    _initializeThumbnailManager();
     _loadUserPreferences();
     _loadFiles();
+  }
+  
+  /// 初始化缩略图管理器
+  Future<void> _initializeThumbnailManager() async {
+    try {
+      await VideoThumbnailManager.instance.initialize();
+      // 清理过期缓存（7天前的缓存）
+      await VideoThumbnailManager.instance.cleanExpiredCache();
+    } catch (e) {
+      print('初始化缩略图管理器失败: $e');
+    }
   }
   
   /// 加载用户偏好设置
@@ -282,10 +296,16 @@ class _FileListPageState extends State<FileListPage> {
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: ListTile(
-            leading: const Icon(
-              Icons.video_file,
-              color: Colors.blue,
-              size: 40,
+            leading: SizedBox(
+              width: 60,
+              height: 45,
+              child: VideoThumbnailWidget(
+                videoFile: file,
+                width: 60,
+                height: 45,
+                fit: BoxFit.cover,
+                showPlayButton: false,
+              ),
             ),
             title: Text(
               fileName,
@@ -367,42 +387,46 @@ class _FileListPageState extends State<FileListPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Container(
+                    child: VideoThumbnailWidget(
+                      videoFile: file,
                       width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.video_file,
-                        size: 60,
-                        color: Colors.blue,
-                      ),
+                      height: double.infinity,
+                      fit: BoxFit.cover,
+                      showPlayButton: true,
+                      onTap: () => _handleFileAction('play', file),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    fileName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    fileSize,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  Text(
-                    fileDate,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey[600],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Column(
+                      children: [
+                        Text(
+                          fileName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          fileSize,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          fileDate,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
