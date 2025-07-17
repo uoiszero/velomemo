@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:screen_brightness/screen_brightness.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'file_list_page.dart';
 import 'settings_page.dart';
 import 'speed_calculator.dart';
@@ -161,6 +162,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     
     // 停止速度跟踪
     _speedCalculator?.stop();
+    
+    // 禁用屏幕常亮，恢复正常锁屏行为
+    await WakelockPlus.disable();
+    print('应用退出时已禁用屏幕常亮模式');
     
     // 恢复屏幕亮度
     await _restoreScreenBrightness();
@@ -873,6 +878,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         _recordingMessage = '开始录制视频...';
       });
       
+      // 启用屏幕常亮，防止锁屏
+      await WakelockPlus.enable();
+      print('已启用屏幕常亮模式');
+      
       // 启动录制动画
       _recordingAnimationController.repeat(reverse: true);
       
@@ -1053,6 +1062,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         _showUI = true; // 停止录制时重新显示UI
       });
       
+      // 禁用屏幕常亮，恢复正常锁屏行为
+      await WakelockPlus.disable();
+      print('已禁用屏幕常亮模式');
+      
       // 停止录制动画和定时器
       _recordingAnimationController.stop();
       _recordingAnimationController.reset();
@@ -1087,6 +1100,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Future<void> _handleRecordingError(String error) async {
     _uiHideTimer?.cancel();
     _screenDimTimer?.cancel(); // 取消屏幕调暗定时器
+    
+    // 禁用屏幕常亮，恢复正常锁屏行为
+    await WakelockPlus.disable();
+    print('录制错误时已禁用屏幕常亮模式');
     
     // 恢复屏幕亮度
     await _restoreScreenBrightness();
