@@ -8,12 +8,13 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:screen_brightness/screen_brightness.dart';
+
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'file_list_page.dart';
 import 'settings_page.dart';
 import 'speed_calculator.dart';
 import 'speed_display_widget.dart';
+import 'video_recorder.dart';
 
 /// 全局摄像头列表
 List<CameraDescription> cameras = [];
@@ -87,14 +88,17 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
-  CameraController? _cameraController;
-  bool _isCameraInitialized = false;
-  bool _isPermissionGranted = false;
-  bool _isRecording = false; // 录制状态
-  String _recordingMessage = '';
-  String? _customFileName; // 存储自定义文件名
+  // 视频录制器
+  late VideoRecorder _videoRecorder;
+  
+  // UI控制相关
   bool _showUI = true; // 控制UI显示状态
   Timer? _uiHideTimer; // UI自动隐藏定时器
+  Timer? _screenDimTimer; // 屏幕调暗定时器
+  
+  // 录制状态
+  bool _isRecording = false;
+  String _recordingMessage = '';
   
   // 录制动画相关
   late AnimationController _recordingAnimationController;
@@ -103,25 +107,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   // 录制时间相关
   Timer? _recordingTimer; // 录制时间更新定时器
   
-  // 屏幕亮度控制相关
-  Timer? _screenDimTimer; // 屏幕调暗定时器
-  double? _originalBrightness; // 保存原始屏幕亮度
-  bool _isScreenDimmed = false; // 屏幕是否已调暗
-  
   // 存储空间和录制时长相关
   String _availableSpace = '计算中...';
   String _estimatedRecordingTime = '计算中...';
   Timer? _storageUpdateTimer; // 存储空间更新定时器
-  
-  // 视频分割相关变量
-  Timer? _segmentTimer;
-  bool _enableVideoSegmentation = true; // 是否启用视频分割
-  int _segmentDurationMinutes = 1; // 分割时长（分钟）
-  int _currentSegmentIndex = 0; // 当前分割索引
-  bool _isUsingNativeRecording = false; // 是否正在使用原生录制
-  
-  // Platform Channel for native video segmentation
-  static const platform = MethodChannel('com.example.velomemo/video_recorder');
   
   // 速度计算器
   SpeedCalculator? _speedCalculator;
@@ -130,6 +119,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    
+    // 初始化视频录制器
+    _videoRecorder = VideoRecorder.instance;
     
     // 初始化录制动画控制器
     _recordingAnimationController = AnimationController(
@@ -149,6 +141,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _initializeCamera();
     _startStorageMonitoring();
     _initializeSpeedCalculator();
+    _setupVideoRecorderListeners();
   }
 
   @override
@@ -158,7 +151,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _recordingTimer?.cancel();
     _screenDimTimer?.cancel();
     _storageUpdateTimer?.cancel();
-    _segmentTimer?.cancel();
     
     // 停止速度跟踪
     _speedCalculator?.stop();
@@ -167,23 +159,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     await WakelockPlus.disable();
     print('应用退出时已禁用屏幕常亮模式');
     
-    // 恢复屏幕亮度
-    await _restoreScreenBrightness();
-    
     // 释放动画控制器
     _recordingAnimationController.dispose();
     
-    // 如果正在录制，先停止录制
-    if (_isRecording && _cameraController != null) {
-      try {
-        await _cameraController!.stopVideoRecording();
-      } catch (e) {
-        print('停止录制时出错: $e');
-      }
-    }
+    // 释放视频录制器资源
+    await _videoRecorder.dispose();
     
-    // 释放摄像头资源
-    await _cameraController?.dispose();
     super.dispose();
   }
 
@@ -195,15 +176,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     final storageStatus = await Permission.storage.request();
     
     if (cameraStatus.isGranted && microphoneStatus.isGranted) {
-      setState(() {
-        _isPermissionGranted = true;
-      });
+      _videoRecorder.setPermissionGranted(true);
       
       if (cameras.isNotEmpty) {
-        await _setupCamera();
+        await _videoRecorder.initializeCamera(cameras);
       }
     } else {
       print('权限被拒绝 - 摄像头: $cameraStatus, 麦克风: $microphoneStatus, 存储: $storageStatus');
+      _videoRecorder.setPermissionGranted(false);
     }
   }
   
@@ -222,117 +202,80 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     }
   }
   
-  /// 保存当前屏幕亮度并调暗屏幕
-  Future<void> _dimScreen() async {
-    try {
-      if (!_isScreenDimmed) {
-        // 保存当前亮度
-        _originalBrightness = await ScreenBrightness().current;
-        // 将屏幕亮度设置为最低（但不完全关闭）
-        await ScreenBrightness().setScreenBrightness(0.01);
-        _isScreenDimmed = true;
-        print('屏幕已调暗，原始亮度: $_originalBrightness');
-      }
-    } catch (e) {
-      print('调暗屏幕失败: $e');
-    }
-  }
-  
-  /// 恢复屏幕亮度
-  Future<void> _restoreScreenBrightness() async {
-    try {
-      if (_isScreenDimmed && _originalBrightness != null) {
-        await ScreenBrightness().setScreenBrightness(_originalBrightness!);
-        _isScreenDimmed = false;
-        print('屏幕亮度已恢复: $_originalBrightness');
-      }
-    } catch (e) {
-      print('恢复屏幕亮度失败: $e');
-    }
-  }
-
-  /// 设置摄像头配置
-  Future<void> _setupCamera() async {
-    try {
-      // 释放之前的摄像头资源
-      await _cameraController?.dispose();
-      
-      // 从设置中加载分辨率和摄像头选择
-      final prefs = await SharedPreferences.getInstance();
-      final resolutionIndex = prefs.getInt('camera_resolution') ?? 1; // 默认为medium
-      final cameraIndex = prefs.getInt('selected_camera') ?? _getDefaultCameraIndex();
-      
-      ResolutionPreset resolution;
-      switch (resolutionIndex) {
-        case 0:
-          resolution = ResolutionPreset.low;
-          break;
-        case 1:
-          resolution = ResolutionPreset.medium;
-          break;
-        case 2:
-          resolution = ResolutionPreset.high;
-          break;
-        case 3:
-          resolution = ResolutionPreset.veryHigh;
-          break;
-        case 4:
-          resolution = ResolutionPreset.ultraHigh;
-          break;
-        case 5:
-          resolution = ResolutionPreset.max;
-          break;
-        default:
-          resolution = ResolutionPreset.medium;
-      }
-      
-      // 确保摄像头索引有效
-      int validCameraIndex = cameraIndex;
-      if (cameraIndex >= cameras.length || cameraIndex < 0) {
-        validCameraIndex = _getDefaultCameraIndex();
-        // 保存正确的摄像头索引
-        await prefs.setInt('selected_camera', validCameraIndex);
-      }
-      
-      // 使用选择的摄像头
-      _cameraController = CameraController(
-        cameras[validCameraIndex],
-        resolution,
-        enableAudio: true,
-        imageFormatGroup: ImageFormatGroup.jpeg,
-      );
-      
-      await _cameraController!.initialize();
-      
-      // 确保摄像头完全初始化后再更新状态
+  /// 设置视频录制器监听器
+  void _setupVideoRecorderListeners() {
+    // 监听录制状态变化
+    _videoRecorder.addRecordingStateListener((isRecording) {
       if (mounted) {
         setState(() {
-          _isCameraInitialized = true;
+          _isRecording = isRecording;
         });
+        
+        if (isRecording) {
+          // 开始录制时启动动画和定时器
+          _recordingAnimationController.repeat(reverse: true);
+          _startRecordingTimer();
+          _startUIHideTimer();
+          _startScreenDimTimer();
+          
+          // 启动速度跟踪
+          if (_speedCalculator != null) {
+            setState(() {
+              _isSpeedTrackingEnabled = true;
+            });
+            print('速度跟踪已启动');
+          }
+        } else {
+          // 停止录制时停止动画和定时器
+          _recordingAnimationController.stop();
+          _recordingAnimationController.reset();
+          _recordingTimer?.cancel();
+          _uiHideTimer?.cancel();
+          _screenDimTimer?.cancel();
+          
+          // 停止速度跟踪
+          if (_speedCalculator != null && _isSpeedTrackingEnabled) {
+            _speedCalculator!.stop();
+            setState(() {
+              _isSpeedTrackingEnabled = false;
+            });
+            print('速度跟踪已停止');
+          }
+          
+          // 恢复屏幕亮度
+          _videoRecorder.restoreScreenBrightness();
+          
+          // 显示UI
+          setState(() {
+            _showUI = true;
+          });
+          _updateSystemUI();
+          
+          // 更新存储信息
+          _updateStorageInfo();
+        }
       }
-    } catch (e) {
-      print('摄像头设置失败: $e');
-      // 重试机制
-      await Future.delayed(const Duration(seconds: 1));
+    });
+    
+    // 监听录制消息变化
+    _videoRecorder.addRecordingMessageListener((message) {
       if (mounted) {
-        await _setupCamera();
+        setState(() {
+          _recordingMessage = message;
+        });
+        
+        // 3秒后清除消息
+        if (message.isNotEmpty) {
+          Future.delayed(const Duration(seconds: 3), () {
+            if (mounted) {
+              setState(() {
+                _recordingMessage = '';
+              });
+            }
+          });
+        }
       }
-    }
-  }
-  
-  /// 获取默认摄像头索引（选择焦距最短的摄像头）
-  int _getDefaultCameraIndex() {
-    if (cameras.isEmpty) return 0;
-    
-    // 优先选择后置摄像头，因为通常后置摄像头有更好的录制效果
-    for (int i = 0; i < cameras.length; i++) {
-      if (cameras[i].lensDirection == CameraLensDirection.back) {
-        return i;
-      }
-    }
-    
-    // 如果没有后置摄像头，返回第一个可用的摄像头
-    return 0;
+    });
   }
   
   /// 重新初始化摄像头（当设置更改时调用）
@@ -348,11 +291,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       return;
     }
     
-    setState(() {
-      _isCameraInitialized = false;
-    });
+    // 重新初始化VideoRecorder
+    await _videoRecorder.reinitializeCamera();
     
-    await _setupCamera();
     // 重新计算存储空间和录制时长
     await _updateStorageInfo();
   }
@@ -424,7 +365,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Future<void> _updateStorageInfo() async {
     try {
       final directory = await _getVideoDirectory();
-      final stat = await directory.stat();
       final freeSpace = await _getAvailableSpace(directory.path);
       
       final estimatedTime = await _calculateEstimatedRecordingTime(freeSpace);
@@ -623,7 +563,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   /// 构建摄像头预览组件
   Widget _buildCameraPreview() {
-    if (!_isPermissionGranted) {
+    if (!_videoRecorder.isPermissionGranted) {
       return Container(
         color: Colors.black,
         child: const Center(
@@ -635,7 +575,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       );
     }
     
-    if (!_isCameraInitialized || _cameraController == null) {
+    if (!_videoRecorder.isCameraInitialized) {
       return Container(
         color: Colors.black,
         child: const Center(
@@ -656,9 +596,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               child: FittedBox(
                 fit: BoxFit.cover,
                 child: SizedBox(
-                  width: _cameraController!.value.previewSize?.height ?? 0,
-                  height: _cameraController!.value.previewSize?.width ?? 0,
-                  child: CameraPreview(_cameraController!),
+                  width: _videoRecorder.cameraController?.value.previewSize?.height ?? 0,
+                  height: _videoRecorder.cameraController?.value.previewSize?.width ?? 0,
+                  child: CameraPreview(_videoRecorder.cameraController!),
                 ),
               ),
             ),
@@ -669,7 +609,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   decoration: BoxDecoration(
                     border: Border.all(
                       color: Colors.red.withValues(alpha: _recordingAnimation.value),
-                      width: _isScreenDimmed ? 12 : 8, // 屏幕调暗时边框更粗，更明显
+                      width: _videoRecorder.isScreenDimmed ? 12 : 8, // 屏幕调暗时边框更粗，更明显
                     ),
                   ),
                 ),
@@ -798,9 +738,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _uiHideTimer?.cancel();
     
     // 如果屏幕被调暗，恢复亮度
-    if (_isScreenDimmed) {
-      _restoreScreenBrightness();
-    }
+    _videoRecorder.restoreScreenBrightness();
     
     setState(() {
       _showUI = !_showUI; // 切换UI显示状态
@@ -811,334 +749,34 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     
     // 如果正在录制且UI现在是显示状态，启动3秒后自动隐藏的定时器
     if (_isRecording && _showUI) {
-      _uiHideTimer = Timer(const Duration(seconds: 3), () {
-        if (mounted && _isRecording) {
-          setState(() {
-            _showUI = false;
-          });
-          _updateSystemUI();
-          
-          // 如果录制时间超过10秒，重新调暗屏幕
-          if (!_isScreenDimmed) {
-            _dimScreen();
-          }
-        }
-      });
+      _startUIHideTimer();
     }
   }
 
   /// 切换录制视频状态
   Future<void> _toggleVideoRecording() async {
-    if (_cameraController == null || !_isCameraInitialized) {
+    if (!_videoRecorder.isCameraInitialized) {
       await _showErrorMessage('摄像头未准备就绪');
       return;
     }
 
     try {
       if (_isRecording) {
-        await _stopVideoRecording();
+        await _videoRecorder.stopRecording();
       } else {
-        await _startVideoRecording();
+        await _videoRecorder.startRecording();
       }
     } catch (e) {
       print('录制操作失败: $e');
-      await _handleRecordingError(e.toString());
+      await _showErrorMessage('录制操作失败: ${e.toString()}');
     }
   }
   
-  /// 开始录制视频
-  Future<void> _startVideoRecording() async {
-    try {
-      // 确保摄像头状态正常
-      if (!_cameraController!.value.isInitialized) {
-        await _setupCamera();
-        await Future.delayed(const Duration(milliseconds: 500));
-      }
-      
-      // 重置分割索引
-      _currentSegmentIndex = 0;
-      
-      // 生成基于当前时间的文件名（整点分钟）
-      final now = DateTime.now();
-      final roundedMinute = DateTime(now.year, now.month, now.day, now.hour, now.minute);
-      final formatter = DateFormat('yyyy_MM_dd_HH_mm');
-      _customFileName = '${formatter.format(roundedMinute)}_${_currentSegmentIndex.toString().padLeft(3, '0')}.mp4';
-      
-      // 如果启用了视频分割，使用Platform Channel启动原生录制
-      if (_enableVideoSegmentation && Platform.isAndroid) {
-        _isUsingNativeRecording = await _startNativeVideoRecording();
-      } else {
-        // 使用Flutter Camera插件录制
-        await _cameraController!.startVideoRecording();
-        _isUsingNativeRecording = false;
-      }
-      
-      setState(() {
-        _isRecording = true;
-        _recordingMessage = '开始录制视频...';
-      });
-      
-      // 启用屏幕常亮，防止锁屏
-      await WakelockPlus.enable();
-      print('已启用屏幕常亮模式');
-      
-      // 启动录制动画
-      _recordingAnimationController.repeat(reverse: true);
-      
-      // 启动速度跟踪（速度计算器在初始化时已自动启动）
-      if (_speedCalculator != null) {
-        setState(() {
-          _isSpeedTrackingEnabled = true;
-        });
-        print('速度跟踪已启动');
-      }
-      
-      // 启动录制时间定时器
-      _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (_isRecording && mounted) {
-          setState(() {
-            // 触发UI更新以显示最新时间
-          });
-          // 每10秒更新一次存储信息（录制时）
-          if (timer.tick % 10 == 0) {
-            _updateStorageInfo();
-          }
-        }
-      });
-      
-      // 只有在原生录制成功启动时才启动视频分割定时器
-      if (_enableVideoSegmentation && _isUsingNativeRecording) {
-        _startSegmentTimer();
-      }
-      
 
-      
-      print('开始录制视频，文件名: $_customFileName');
-      
-      // 3秒后清除录制开始提示信息并隐藏UI
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted && _isRecording) {
-          setState(() {
-            _recordingMessage = '';
-            _showUI = false; // 隐藏UI元素
-          });
-          _updateSystemUI();
-        }
-      });
-      
-      // 10秒后调暗屏幕但继续录制
-      _screenDimTimer = Timer(const Duration(seconds: 10), () {
-        if (mounted && _isRecording) {
-          _dimScreen();
-          setState(() {
-            _recordingMessage = '录制中 - 屏幕已调暗';
-          });
-          
-          // 显示3秒提示信息后清除
-          Future.delayed(const Duration(seconds: 3), () {
-            if (mounted && _isRecording) {
-              setState(() {
-                _recordingMessage = '';
-              });
-            }
-          });
-        }
-      });
-    } catch (e) {
-      print('开始录制失败: $e');
-      await _handleRecordingError('开始录制失败: ${e.toString()}');
-    }
-  }
   
-  /// 启动原生视频录制（支持分割）
-  Future<bool> _startNativeVideoRecording() async {
-    try {
-      final directory = await _getVideoDirectory();
-      final filePath = '${directory.path}/$_customFileName';
-      
-      await platform.invokeMethod('startRecording', {
-        'filePath': filePath,
-        'maxDurationMs': _segmentDurationMinutes * 60 * 1000, // 转换为毫秒
-      });
-      
-      print('原生录制已启动: $filePath');
-      return true; // 原生录制启动成功
-    } catch (e) {
-      print('启动原生录制失败: $e');
-      // 回退到Flutter Camera录制
-      await _cameraController!.startVideoRecording();
-      return false; // 原生录制启动失败，使用Flutter Camera
-    }
-  }
+
   
-  /// 启动视频分割定时器
-  void _startSegmentTimer() {
-    _segmentTimer = Timer.periodic(
-      Duration(minutes: _segmentDurationMinutes),
-      (timer) async {
-        if (_isRecording && mounted) {
-          await _switchToNextSegment();
-        }
-      },
-    );
-  }
-  
-  /// 切换到下一个视频分割
-  Future<void> _switchToNextSegment() async {
-    try {
-      _currentSegmentIndex++;
-      
-      // 生成新的文件名（基于当前整点分钟）
-      final now = DateTime.now();
-      final roundedMinute = DateTime(now.year, now.month, now.day, now.hour, now.minute);
-      final formatter = DateFormat('yyyy_MM_dd_HH_mm');
-      final newFileName = '${formatter.format(roundedMinute)}_${_currentSegmentIndex.toString().padLeft(3, '0')}.mp4';
-      
-      final directory = await _getVideoDirectory();
-      final newFilePath = '${directory.path}/$newFileName';
-      
-      // 调用原生方法切换到下一个文件
-      await platform.invokeMethod('setNextOutputFile', {
-        'filePath': newFilePath,
-      });
-      
-      _customFileName = newFileName;
-      print('已切换到下一个视频分割: $newFilePath');
-      
-    } catch (e) {
-      print('切换视频分割失败: $e');
-    }
-  }
-  
-  /// 停止录制视频
-  Future<void> _stopVideoRecording() async {
-    try {
-      // 取消分割定时器
-      _segmentTimer?.cancel();
-      
-      if (_isUsingNativeRecording) {
-        // 停止原生录制
-        await platform.invokeMethod('stopRecording');
-      } else {
-        // 停止Flutter Camera录制
-        final video = await _cameraController!.stopVideoRecording();
-        
-        // 如果有自定义文件名，则重命名文件
-        if (_customFileName != null) {
-          try {
-            final directory = await _getVideoDirectory();
-            final newPath = '${directory.path}/$_customFileName';
-            final originalFile = File(video.path);
-            final newFile = await originalFile.copy(newPath);
-            await originalFile.delete(); // 删除原文件
-            print('视频已保存为自定义文件名: $newPath');
-          } catch (e) {
-            print('重命名文件失败: $e，使用原文件名: ${video.path}');
-          }
-        }
-      }
-      
-      // 重置录制方式状态
-      _isUsingNativeRecording = false;
-      
-      _uiHideTimer?.cancel(); // 停止录制时取消定时器
-      _screenDimTimer?.cancel(); // 取消屏幕调暗定时器
-      
-      // 恢复屏幕亮度
-      await _restoreScreenBrightness();
-      
-      // 停止速度跟踪
-      if (_speedCalculator != null && _isSpeedTrackingEnabled) {
-        _speedCalculator!.stop();
-        setState(() {
-          _isSpeedTrackingEnabled = false;
-        });
-        print('速度跟踪已停止');
-      }
-      
-      setState(() {
-        _isRecording = false;
-        _recordingMessage = '录制已停止';
-        _showUI = true; // 停止录制时重新显示UI
-      });
-      
-      // 禁用屏幕常亮，恢复正常锁屏行为
-      await WakelockPlus.disable();
-      print('已禁用屏幕常亮模式');
-      
-      // 停止录制动画和定时器
-      _recordingAnimationController.stop();
-      _recordingAnimationController.reset();
-      _recordingTimer?.cancel();
-      
-      // 停止录制时显示系统UI
-      _updateSystemUI();
-      
-      print('视频录制已停止');
-      
-      // 清除自定义文件名
-      _customFileName = null;
-      
-      // 更新存储信息
-      _updateStorageInfo();
-      
-      // 3秒后清除提示信息
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() {
-            _recordingMessage = '';
-          });
-        }
-      });
-    } catch (e) {
-      print('停止录制失败: $e');
-      await _handleRecordingError('停止录制失败: ${e.toString()}');
-    }
-  }
-  
-  /// 处理录制错误
-  Future<void> _handleRecordingError(String error) async {
-    _uiHideTimer?.cancel();
-    _screenDimTimer?.cancel(); // 取消屏幕调暗定时器
-    
-    // 禁用屏幕常亮，恢复正常锁屏行为
-    await WakelockPlus.disable();
-    print('录制错误时已禁用屏幕常亮模式');
-    
-    // 恢复屏幕亮度
-    await _restoreScreenBrightness();
-    
-    setState(() {
-      _isRecording = false;
-      _recordingMessage = '录制失败，正在重试...';
-      _showUI = true;
-    });
-    
-    // 停止录制动画和定时器
-    _recordingAnimationController.stop();
-    _recordingAnimationController.reset();
-    _recordingTimer?.cancel();
-    
-    // 错误时显示系统UI
-    _updateSystemUI();
-    
-    // 尝试重新初始化摄像头
-    await Future.delayed(const Duration(seconds: 1));
-    await _setupCamera();
-    
-    setState(() {
-      _recordingMessage = '摄像头已重置，请重试';
-    });
-    
-    // 3秒后清除错误信息
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _recordingMessage = '';
-        });
-      }
-    });
-  }
+
   
   /// 显示错误信息
   Future<void> _showErrorMessage(String message) async {
@@ -1154,6 +792,57 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       if (mounted) {
         setState(() {
           _recordingMessage = '';
+        });
+      }
+    });
+  }
+  
+  /// 启动UI隐藏定时器
+  void _startUIHideTimer() {
+    _uiHideTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && _isRecording) {
+        setState(() {
+          _showUI = false;
+        });
+        _updateSystemUI();
+        
+        // 如果录制时间超过10秒，重新调暗屏幕
+        _videoRecorder.dimScreen();
+      }
+    });
+  }
+  
+  /// 启动录制定时器
+  void _startRecordingTimer() {
+    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_isRecording && mounted) {
+        setState(() {
+          // 触发UI更新以显示最新时间
+        });
+        // 每10秒更新一次存储信息（录制时）
+        if (timer.tick % 10 == 0) {
+          _updateStorageInfo();
+        }
+      }
+    });
+  }
+  
+  /// 启动屏幕调暗定时器
+  void _startScreenDimTimer() {
+    _screenDimTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted && _isRecording) {
+        _videoRecorder.dimScreen();
+        setState(() {
+          _recordingMessage = '录制中 - 屏幕已调暗';
+        });
+        
+        // 显示3秒提示信息后清除
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted && _isRecording) {
+            setState(() {
+              _recordingMessage = '';
+            });
+          }
         });
       }
     });
