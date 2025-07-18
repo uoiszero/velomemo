@@ -1,0 +1,49 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="256" cy="256" r="240" fill="#2196F3" stroke="#1976D2" stroke-width="8"/>
+  
+  <!-- 摄像头主体 -->
+  <rect x="142" y="172" width="228" height="168" rx="24" ry="24" fill="#37474F" stroke="#263238" stroke-width="4.5"/>
+  
+  <!-- 镜头外圈 -->
+  <circle cx="256" cy="256" r="60" fill="#455A64" stroke="#37474F" stroke-width="4"/>
+  
+  <!-- 镜头内圈 -->
+  <circle cx="256" cy="256" r="45" fill="#263238" stroke="#37474F" stroke-width="2"/>
+  
+  <!-- 镜头中心反光 -->
+  <circle cx="256" cy="256" r="30" fill="#37474F"/>
+  <circle cx="246" cy="246" r="12" fill="#78909C" opacity="0.8"/>
+  
+  <!-- 录制指示灯 -->
+  <circle cx="300" cy="220" r="8" fill="#F44336">
+    <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- 速度表盘 -->
+  <g transform="translate(380, 320)">
+    <!-- 表盘背景 -->
+    <circle cx="0" cy="0" r="60" fill="#34495E" stroke="#2C3E50" stroke-width="3"/>
+    <circle cx="0" cy="0" r="50" fill="#2C3E50"/>
+    
+    <!-- 刻度 -->
+    <g stroke="#ECF0F1" stroke-width="2">
+      <line x1="0" y1="-45" x2="0" y2="-35" transform="rotate(0)"/>
+      <line x1="0" y1="-45" x2="0" y2="-40" transform="rotate(30)"/>
+      <line x1="0" y1="-45" x2="0" y2="-35" transform="rotate(60)"/>
+      <line x1="0" y1="-45" x2="0" y2="-40" transform="rotate(90)"/>
+      <line x1="0" y1="-45" x2="0" y2="-35" transform="rotate(120)"/>
+      <line x1="0" y1="-45" x2="0" y2="-40" transform="rotate(150)"/>
+    </g>
+    
+    <!-- 指针 -->
+    <line x1="0" y1="0" x2="0" y2="-30" stroke="#E74C3C" stroke-width="3" stroke-linecap="round" transform="rotate(45)"/>
+    
+    <!-- 中心点 -->
+    <circle cx="0" cy="0" r="5" fill="#E74C3C"/>
+  </g>
+  
+
+  
+
+</svg>

@@ -6,21 +6,49 @@
 # 默认目标
 help:
 	@echo "VeloMemo 开发工具"
+	@echo "=================="
 	@echo ""
-	@echo "可用命令:"
-	@echo "  make test           - 运行所有测试"
-	@echo "  make test-unit      - 运行单元测试"
-	@echo "  make test-widget    - 运行组件测试"
-	@echo "  make test-integration - 运行集成测试"
-	@echo "  make test-coverage  - 运行测试并生成覆盖率报告"
-	@echo "  make build          - 构建应用"
-	@echo "  make build-apk      - 构建 Android APK"
-	@echo "  make install        - 安装到设备"
-	@echo "  make deps           - 获取依赖"
-	@echo "  make clean          - 清理构建文件"
-	@echo "  make doctor         - 检查 Flutter 环境"
-	@echo "  make format         - 格式化代码"
-	@echo "  make analyze        - 分析代码"
+	@echo "测试命令:"
+	@echo "  make test              - 运行所有测试"
+	@echo "  make test-unit         - 运行单元测试"
+	@echo "  make test-widget       - 运行组件测试"
+	@echo "  make test-integration  - 运行集成测试"
+	@echo "  make test-coverage     - 生成测试覆盖率报告"
+	@echo ""
+	@echo "构建命令:"
+	@echo "  make build             - 构建应用"
+	@echo "  make build-apk         - 构建 APK"
+	@echo "  make build-ios         - 构建 iOS 应用"
+	@echo ""
+	@echo "安装和运行:"
+	@echo "  make install           - 安装到设备"
+	@echo "  make run               - 运行应用"
+	@echo "  make run-release       - 运行发布版本"
+	@echo ""
+	@echo "依赖管理:"
+	@echo "  make deps              - 获取依赖"
+	@echo "  make upgrade           - 升级依赖"
+	@echo ""
+	@echo "代码质量:"
+	@echo "  make format            - 格式化代码"
+	@echo "  make analyze           - 分析代码"
+	@echo "  make lint              - 代码检查"
+	@echo ""
+	@echo "图标管理:"
+	@echo "  make icon-update       - 更新应用图标"
+	@echo "  make icon-generate     - 生成图标文件"
+	@echo "  make icon-apply        - 应用图标"
+	@echo "  make icon-help         - 图标帮助"
+	@echo ""
+	@echo "清理:"
+	@echo "  make clean             - 清理构建文件"
+	@echo ""
+	@echo "环境:"
+	@echo "  make doctor            - 检查 Flutter 环境"
+	@echo ""
+	@echo "开发工具:"
+	@echo "  make dev-tools         - 安装开发工具"
+	@echo "  make devtools          - 启动 DevTools"
 
 # 测试相关命令
 test: test-all
@@ -106,6 +134,28 @@ doctor:
 devtools:
 	@echo "🛠️ 启动 Flutter DevTools..."
 	flutter pub global run devtools
+
+dev-tools:
+	@echo "🛠️ 安装开发工具..."
+	flutter pub global activate flutter_launcher_icons
+	flutter pub global activate build_runner
+
+# 图标管理
+icon-update:
+	@echo "🎨 更新应用图标..."
+	./update_icons.sh
+
+icon-generate:
+	@echo "🎯 生成图标文件..."
+	./update_icons.sh --generate
+
+icon-apply:
+	@echo "🚀 应用图标..."
+	./update_icons.sh --apply
+
+icon-help:
+	@echo "📖 显示图标帮助..."
+	./update_icons.sh --help
 
 # 生成代码
 generate:
