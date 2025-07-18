@@ -3,7 +3,6 @@
 // 测试视频录制功能的核心逻辑
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:camera/camera.dart';
 import 'package:velomemo/video_recorder.dart';

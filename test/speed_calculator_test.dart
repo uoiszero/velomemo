@@ -5,7 +5,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:velomemo/speed_calculator.dart';
-import 'test_utils.dart';
 
 void main() {
   group('SpeedCalculator Tests', () {

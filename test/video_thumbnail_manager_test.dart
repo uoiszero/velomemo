@@ -6,11 +6,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'dart:typed_data';
-import 'package:path_provider/path_provider.dart';
 import 'package:velomemo/video_thumbnail_manager.dart';
-import 'dart:io';
-import 'package:flutter/services.dart';
 
 // 生成Mock类
 @GenerateMocks([File])
