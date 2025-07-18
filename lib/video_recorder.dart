@@ -33,7 +33,7 @@ class VideoRecorder {
   bool _isUsingNativeRecording = false;
   
   // Platform Channel for native video segmentation
-  static const platform = MethodChannel('com.example.velomemo/video_recorder');
+  static const platform = MethodChannel('com.yueao.velomemo/video_recorder');
   
   // 屏幕亮度控制
   double? _originalBrightness;

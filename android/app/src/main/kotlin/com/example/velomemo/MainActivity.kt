@@ -1,4 +1,4 @@
-package com.example.velomemo
+package com.yueao.velomemo
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -18,7 +18,7 @@ import java.io.IOException
  * 实现基于MediaRecorder的连续视频分割功能
  */
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.example.velomemo/video_recorder"
+    private val CHANNEL = "com.yueao.velomemo/video_recorder"
     private var mediaRecorder: MediaRecorder? = null
     private var isRecording = false
     private val REQUEST_PERMISSIONS = 1001
