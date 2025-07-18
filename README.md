@@ -8,6 +8,15 @@ VeloMemo is a powerful dash cam application that transforms your smartphone or t
 
 ## ✨ Core Features
 
+### 🎨 Professional Icon Design
+- **Dash Cam Theme**: Professional icon specifically designed for dash cam applications
+- **Camera Elements**: Prominent camera body design to enhance app functionality recognition
+- **Speed Dial**: Integrated speed dial elements reflecting driving monitoring features
+- **Recording Indicator**: Red recording indicator light for intuitive recording function expression
+- **Multi-resolution Support**: Complete Android icon specification support (hdpi, xhdpi, xxhdpi, xxxhdpi)
+- **Adaptive Icons**: Support for Android 8.0+ Adaptive Icon features
+- **SVG Vector Format**: Using SVG source files for easy modification and maintenance
+
 ### 📹 Smart Video Recording
 - **Multi-resolution Support**: From 240p to 4K ultra-clear quality, meeting different storage and quality needs
 - **Automatic Video Segmentation**: Supports automatic video file segmentation by time to avoid oversized single files
@@ -187,15 +196,73 @@ flutter test                # Run all tests
 flutter test --coverage     # Generate coverage report
 ```
 
+## 🎨 Icon Management
+
+### Icon Features
+- **Professional Design**: Icon specifically designed for dash cam applications
+- **Camera Body**: Prominent camera elements, enlarged by 50% for enhanced visual impact
+- **Speed Dial**: Integrated speed monitoring elements
+- **Recording Indicator**: Red indicator light expressing recording functionality
+- **Clean Design**: Text elements removed to maintain icon simplicity
+
+### Quick Icon Updates
+
+#### Using Icon Management Script (Recommended)
+```bash
+# Complete update (generate + apply)
+./update_icons.sh
+
+# Generate PNG icons only
+./update_icons.sh --generate
+
+# Apply to project only
+./update_icons.sh --apply
+
+# Show help
+./update_icons.sh --help
+```
+
+#### Using Makefile (macOS/Linux)
+```bash
+make icon-update            # Complete icon update
+make icon-generate          # Generate PNG icons
+make icon-apply             # Apply to project
+make icon-help              # Show help
+```
+
+### Custom Icons
+
+1. **Replace Source Files**:
+   - Replace `assets/icons/app_icon.svg` (main icon)
+   - Replace `assets/icons/app_icon_adaptive.svg` (adaptive icon)
+   - Run `./update_icons.sh` to update
+
+2. **Modify Configuration**:
+   - Edit `flutter_launcher_icons` configuration in `pubspec.yaml`
+   - Run `flutter packages pub run flutter_launcher_icons:main`
+
+### Icon File Structure
+```
+assets/icons/
+├── app_icon.svg              # Main icon source file
+├── app_icon.png              # Main icon PNG
+├── app_icon_adaptive.svg     # Adaptive icon source file
+├── app_icon_adaptive.png     # Adaptive icon PNG
+└── app_icon_foreground.png   # Foreground icon PNG
+```
+
 ### Development Tools
 
 The project provides a complete development toolchain:
 
 - **`run_tests.sh`** / **`run_tests.bat`**: Cross-platform test scripts
 - **`Makefile`**: Convenient development command collection
+- **`update_icons.sh`**: Icon update and management script
 - **`TESTING.md`**: Detailed testing guide and best practices
+- **`ICON_GUIDE.md`**: Icon design guide and update instructions
 
 For more testing-related information, please refer to [TESTING.md](TESTING.md).
+For more icon-related information, please refer to [ICON_GUIDE.md](ICON_GUIDE.md).
 
 ## 🔧 Development Notes
 
@@ -211,6 +278,14 @@ lib/
 ├── video_thumbnail_manager.dart # Video thumbnail management
 └── video_thumbnail_widget.dart # Video thumbnail widget
 
+assets/
+└── icons/                 # Application icon resources
+    ├── app_icon.svg       # Main icon source file
+    ├── app_icon.png       # Main icon PNG
+    ├── app_icon_adaptive.svg # Adaptive icon source file
+    ├── app_icon_adaptive.png # Adaptive icon PNG
+    └── app_icon_foreground.png # Foreground icon PNG
+
 test/
 ├── integration_test.dart   # Integration tests
 ├── speed_calculator_test.dart # Speed calculator tests
@@ -218,6 +293,13 @@ test/
 ├── video_recorder_test.dart # Video recorder tests
 ├── video_thumbnail_manager_test.dart # Thumbnail management tests
 └── widget_test.dart        # Basic widget tests
+
+# Development Tools
+├── update_icons.sh         # Icon update script
+├── run_tests.sh           # Test script
+├── Makefile               # Development command collection
+├── ICON_GUIDE.md          # Icon design guide
+└── TESTING.md             # Testing guide
 ```
 
 ### Key Feature Implementation

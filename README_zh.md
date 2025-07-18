@@ -8,6 +8,15 @@ VeloMemo 是一款功能强大的行车记录仪应用，将您的手机或平�
 
 ## ✨ 核心功能
 
+### 🎨 专业图标设计
+- **行车记录仪主题**：专为行车记录仪应用设计的专业图标
+- **摄像头元素**：突出的摄像头主体设计，强化应用功能识别
+- **速度表盘**：集成速度表盘元素，体现行车监控特性
+- **录制指示灯**：红色录制指示灯，直观表达录制功能
+- **多分辨率支持**：完整的 Android 图标规范支持（hdpi、xhdpi、xxhdpi、xxxhdpi）
+- **自适应图标**：支持 Android 8.0+ 的 Adaptive Icon 特性
+- **SVG 矢量格式**：使用 SVG 源文件，便于修改和维护
+
 ### 📹 智能视频录制
 - **多分辨率支持**：从 240p 到 4K 超清画质，满足不同存储和画质需求
 - **自动视频分割**：支持按时间自动分割视频文件，避免单个文件过大
@@ -187,15 +196,73 @@ flutter test                # 运行所有测试
 flutter test --coverage     # 生成覆盖率报告
 ```
 
+## 🎨 图标管理
+
+### 图标特性
+- **专业设计**：专为行车记录仪应用设计的图标
+- **摄像头主体**：突出的摄像头元素，放大50%以增强视觉效果
+- **速度表盘**：集成的速度监控元素
+- **录制指示灯**：红色指示灯表达录制功能
+- **简洁设计**：移除文字元素，保持图标简洁性
+
+### 快速更新图标
+
+#### 使用图标管理脚本（推荐）
+```bash
+# 完整更新（生成+应用）
+./update_icons.sh
+
+# 仅生成 PNG 图标
+./update_icons.sh --generate
+
+# 仅应用到项目
+./update_icons.sh --apply
+
+# 查看帮助
+./update_icons.sh --help
+```
+
+#### 使用 Makefile（macOS/Linux）
+```bash
+make icon-update            # 完整更新图标
+make icon-generate          # 生成 PNG 图标
+make icon-apply             # 应用到项目
+make icon-help              # 查看帮助
+```
+
+### 自定义图标
+
+1. **替换源文件**：
+   - 替换 `assets/icons/app_icon.svg`（主图标）
+   - 替换 `assets/icons/app_icon_adaptive.svg`（自适应图标）
+   - 运行 `./update_icons.sh` 更新
+
+2. **修改配置**：
+   - 编辑 `pubspec.yaml` 中的 `flutter_launcher_icons` 配置
+   - 运行 `flutter packages pub run flutter_launcher_icons:main`
+
+### 图标文件结构
+```
+assets/icons/
+├── app_icon.svg              # 主图标源文件
+├── app_icon.png              # 主图标 PNG
+├── app_icon_adaptive.svg     # 自适应图标源文件
+├── app_icon_adaptive.png     # 自适应图标 PNG
+└── app_icon_foreground.png   # 前景图标 PNG
+```
+
 ### 开发工具
 
 项目提供了完整的开发工具链：
 
 - **`run_tests.sh`** / **`run_tests.bat`**：跨平台测试脚本
 - **`Makefile`**：便捷的开发命令集合
+- **`update_icons.sh`**：图标更新和管理脚本
 - **`TESTING.md`**：详细的测试指南和最佳实践
+- **`ICON_GUIDE.md`**：图标设计指南和更新说明
 
 更多测试相关信息请参阅 [TESTING.md](TESTING.md)。
+更多图标相关信息请参阅 [ICON_GUIDE.md](ICON_GUIDE.md)。
 
 ## 🔧 开发说明
 
@@ -211,6 +278,14 @@ lib/
 ├── video_thumbnail_manager.dart # 视频缩略图管理
 └── video_thumbnail_widget.dart # 视频缩略图组件
 
+assets/
+└── icons/                 # 应用图标资源
+    ├── app_icon.svg       # 主图标源文件
+    ├── app_icon.png       # 主图标 PNG
+    ├── app_icon_adaptive.svg # 自适应图标源文件
+    ├── app_icon_adaptive.png # 自适应图标 PNG
+    └── app_icon_foreground.png # 前景图标 PNG
+
 test/
 ├── integration_test.dart   # 集成测试
 ├── speed_calculator_test.dart # 速度计算器测试
@@ -218,6 +293,13 @@ test/
 ├── video_recorder_test.dart # 视频录制器测试
 ├── video_thumbnail_manager_test.dart # 缩略图管理测试
 └── widget_test.dart        # 基本组件测试
+
+# 开发工具
+├── update_icons.sh         # 图标更新脚本
+├── run_tests.sh           # 测试脚本
+├── Makefile               # 开发命令集合
+├── ICON_GUIDE.md          # 图标设计指南
+└── TESTING.md             # 测试指南
 ```
 
 ### 关键特性实现
