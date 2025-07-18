@@ -1,116 +1,116 @@
 # VeloMemo
 
-一款基于 Flutter 开发的智能行车记录仪应用，专为移动设备设计，提供专业的视频录制和管理功能。
+An intelligent dash cam application developed with Flutter, designed specifically for mobile devices, providing professional video recording and management features.
 
-## 🚗 应用简介
+## 🚗 Application Overview
 
-VeloMemo 是一款功能强大的行车记录仪应用，将您的手机或平板电脑转变为专业的行车记录设备。应用采用现代化的 Material Design 设计语言，提供直观易用的用户界面和丰富的功能特性。
+VeloMemo is a powerful dash cam application that transforms your smartphone or tablet into a professional driving recorder. The app adopts modern Material Design language, providing an intuitive and user-friendly interface with rich feature sets.
 
-## ✨ 核心功能
+## ✨ Core Features
 
-### 📹 智能视频录制
-- **多分辨率支持**：从 240p 到 4K 超清画质，满足不同存储和画质需求
-- **自动视频分割**：支持按时间自动分割视频文件，避免单个文件过大
-- **实时录制指示**：录制时显示红色边框和时间水印，状态一目了然
-- **智能文件命名**：基于录制时间自动生成有序的文件名
-- **后台录制优化**：录制过程中自动调暗屏幕，延长电池续航
+### 📹 Smart Video Recording
+- **Multi-resolution Support**: From 240p to 4K ultra-clear quality, meeting different storage and quality needs
+- **Automatic Video Segmentation**: Supports automatic video file segmentation by time to avoid oversized single files
+- **Real-time Recording Indicator**: Displays red border and time watermark during recording for clear status indication
+- **Smart File Naming**: Automatically generates sequential file names based on recording time
+- **Background Recording Optimization**: Automatically dims screen during recording to extend battery life
 
-### 🎥 摄像头管理
-- **多摄像头支持**：自动检测并支持设备上的所有摄像头
-- **智能摄像头选择**：优先选择后置摄像头，提供最佳录制效果
-- **实时预览**：全屏摄像头预览，所见即所录
-- **动态切换**：支持在设置中切换不同摄像头
+### 🎥 Camera Management
+- **Multi-camera Support**: Automatically detects and supports all cameras on the device
+- **Smart Camera Selection**: Prioritizes rear camera for optimal recording results
+- **Real-time Preview**: Full-screen camera preview - what you see is what you record
+- **Dynamic Switching**: Supports switching between different cameras in settings
 
-### 📁 文件管理系统
-- **专用存储目录**：在设备的 Movies/VeloMemo 目录下统一管理视频文件
-- **多种显示模式**：支持列表视图和网格视图
-- **灵活排序选项**：按文件名、大小、日期进行升序或降序排列
-- **详细文件信息**：显示文件大小、创建时间等详细信息
-- **批量操作**：支持文件的查看、分享和删除操作
+### 📁 File Management System
+- **Dedicated Storage Directory**: Unified video file management in device's Movies/VeloMemo directory
+- **Multiple Display Modes**: Supports both list view and grid view
+- **Flexible Sorting Options**: Sort by filename, size, or date in ascending or descending order
+- **Detailed File Information**: Displays file size, creation time, and other detailed information
+- **Batch Operations**: Supports viewing, sharing, and deleting files
 
-### ⚙️ 智能设置系统
-- **画质调节**：6 档画质设置，从节省空间到超清画质
-- **摄像头配置**：支持选择和配置不同的摄像头
-- **存储监控**：实时显示可用存储空间和预计录制时长
-- **用户偏好保存**：自动保存用户的设置偏好
+### ⚙️ Smart Settings System
+- **Quality Adjustment**: 6-level quality settings from space-saving to ultra-clear
+- **Camera Configuration**: Supports selection and configuration of different cameras
+- **Storage Monitoring**: Real-time display of available storage space and estimated recording duration
+- **User Preference Saving**: Automatically saves user setting preferences
 
-### 🔋 电源优化
-- **屏幕亮度控制**：录制时自动调暗屏幕，节省电量
-- **智能 UI 隐藏**：录制过程中自动隐藏界面元素，减少干扰
-- **沉浸式体验**：支持全屏录制模式，最大化录制区域
+### 🔋 Power Optimization
+- **Screen Brightness Control**: Automatically dims screen during recording to save power
+- **Smart UI Hiding**: Automatically hides interface elements during recording to reduce interference
+- **Immersive Experience**: Supports full-screen recording mode to maximize recording area
 
-### 🛡️ 权限管理
-- **智能权限请求**：自动请求摄像头、麦克风和存储权限
-- **权限状态检测**：实时检测权限状态，确保功能正常
-- **友好错误处理**：权限被拒绝时提供清晰的提示信息
+### 🛡️ Permission Management
+- **Smart Permission Requests**: Automatically requests camera, microphone, and storage permissions
+- **Permission Status Detection**: Real-time detection of permission status to ensure proper functionality
+- **Friendly Error Handling**: Provides clear prompts when permissions are denied
 
-## 🏗️ 技术架构
+## 🏗️ Technical Architecture
 
-### 开发框架
-- **Flutter 3.8.1+**：跨平台移动应用开发框架
-- **Dart 语言**：现代化的编程语言，提供出色的性能
+### Development Framework
+- **Flutter 3.8.1+**: Cross-platform mobile application development framework
+- **Dart Language**: Modern programming language providing excellent performance
 
-### 核心依赖
-- **camera: ^0.10.5+9**：摄像头控制和视频录制
-- **permission_handler: ^11.3.1**：权限管理
-- **path_provider: ^2.1.2**：文件路径管理
-- **shared_preferences: ^2.2.2**：本地数据存储
-- **screen_brightness: ^0.2.2+1**：屏幕亮度控制
-- **package_info_plus: ^4.2.0**：应用信息获取
-- **intl: ^0.19.0**：国际化和日期格式化
+### Core Dependencies
+- **camera: ^0.10.5+9**: Camera control and video recording
+- **permission_handler: ^11.3.1**: Permission management
+- **path_provider: ^2.1.2**: File path management
+- **shared_preferences: ^2.2.2**: Local data storage
+- **screen_brightness: ^0.2.2+1**: Screen brightness control
+- **package_info_plus: ^4.2.0**: Application information retrieval
+- **intl: ^0.19.0**: Internationalization and date formatting
 
-### 平台支持
-- **Android**：完整功能支持，包括原生视频分割
-- **iOS**：基础功能支持（计划中）
+### Platform Support
+- **Android**: Full feature support, including native video segmentation
+- **iOS**: Basic feature support (planned)
 
-## 📱 用户界面
+## 📱 User Interface
 
-### 主录制界面
-- 全屏摄像头预览
-- 浮动录制控制按钮
-- 实时存储空间显示
-- 录制状态指示器
-- 智能 UI 自动隐藏
+### Main Recording Interface
+- Full-screen camera preview
+- Floating recording control button
+- Real-time storage space display
+- Recording status indicator
+- Smart UI auto-hide
 
-### 文件管理界面
-- 清晰的文件列表展示
-- 多种排序和显示选项
-- 文件详细信息显示
-- 便捷的操作菜单
+### File Management Interface
+- Clear file list display
+- Multiple sorting and display options
+- File detailed information display
+- Convenient operation menu
 
-### 设置界面
-- 分类清晰的设置选项
-- 实时设置预览
-- 详细的功能说明
-- 应用信息展示
+### Settings Interface
+- Clearly categorized setting options
+- Real-time setting preview
+- Detailed feature descriptions
+- Application information display
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 环境要求
-- Flutter SDK 3.8.1 或更高版本
-- Dart SDK 3.0.0 或更高版本
-- Android Studio 或 VS Code
-- Android 设备或模拟器（API 21+）
+### Environment Requirements
+- Flutter SDK 3.8.1 or higher
+- Dart SDK 3.0.0 or higher
+- Android Studio or VS Code
+- Android device or emulator (API 21+)
 
-### 安装步骤
+### Installation Steps
 
-1. **克隆项目**
+1. **Clone Project**
    ```bash
    git clone <repository-url>
    cd velomemo
    ```
 
-2. **安装依赖**
+2. **Install Dependencies**
    ```bash
    flutter pub get
    ```
 
-3. **运行应用**
+3. **Run Application**
    ```bash
    flutter run
    ```
 
-### 构建发布版本
+### Build Release Version
 
 ```bash
 # Android APK
@@ -120,128 +120,128 @@ flutter build apk --release
 flutter build appbundle --release
 ```
 
-## 📋 使用说明
+## 📋 Usage Instructions
 
-### 首次使用
-1. 启动应用后，系统会自动请求必要的权限
-2. 授予摄像头、麦克风和存储权限
-3. 应用会自动检测并配置最佳的摄像头设置
+### First Use
+1. After launching the app, the system will automatically request necessary permissions
+2. Grant camera, microphone, and storage permissions
+3. The app will automatically detect and configure optimal camera settings
 
-### 开始录制
-1. 点击红色录制按钮开始录制
-2. 录制过程中会显示红色边框指示
-3. 再次点击按钮停止录制
-4. 视频文件会自动保存到专用目录
+### Start Recording
+1. Tap the red record button to start recording
+2. A red border will be displayed during recording
+3. Tap the button again to stop recording
+4. Video files will be automatically saved to the dedicated directory
 
-### 查看录制文件
-1. 点击文件夹图标进入文件管理
-2. 浏览已录制的视频文件
-3. 支持播放、分享和删除操作
+### View Recorded Files
+1. Tap the folder icon to enter file management
+2. Browse recorded video files
+3. Supports playback, sharing, and deletion operations
 
-### 调整设置
-1. 点击设置图标进入设置页面
-2. 根据需要调整画质和摄像头
-3. 设置会自动保存并立即生效
+### Adjust Settings
+1. Tap the settings icon to enter the settings page
+2. Adjust quality and camera as needed
+3. Settings will be automatically saved and take effect immediately
 
-## 🧪 测试
+## 🧪 Testing
 
-### 测试覆盖
-项目包含完整的测试套件，确保代码质量和功能稳定性：
+### Test Coverage
+The project includes a comprehensive test suite to ensure code quality and functional stability:
 
-- **单元测试**：50+ 测试用例，覆盖核心业务逻辑
-  - 速度计算器测试
-  - 视频录制功能测试
-  - 视频缩略图管理测试
-- **组件测试**：UI 组件功能验证
-  - 速度显示组件测试（47个测试用例）
-  - 基本 UI 组件测试
-- **集成测试**：组件间交互验证
+- **Unit Tests**: 50+ test cases covering core business logic
+  - Speed calculator tests
+  - Video recording functionality tests
+  - Video thumbnail management tests
+- **Widget Tests**: UI component functionality verification
+  - Speed display widget tests (47 test cases)
+  - Basic UI component tests
+- **Integration Tests**: Component interaction verification
 
-### 快速测试命令
+### Quick Test Commands
 
-#### 使用测试脚本（推荐）
+#### Using Test Scripts (Recommended)
 ```bash
 # macOS/Linux
-./run_tests.sh              # 运行所有测试
-./run_tests.sh --unit       # 单元测试
-./run_tests.sh --widget     # 组件测试
-./run_tests.sh --coverage   # 生成覆盖率报告
+./run_tests.sh              # Run all tests
+./run_tests.sh --unit       # Unit tests
+./run_tests.sh --widget     # Widget tests
+./run_tests.sh --coverage   # Generate coverage report
 
 # Windows
-run_tests.bat -a            # 运行所有测试
-run_tests.bat -u            # 单元测试
-run_tests.bat -c            # 生成覆盖率报告
+run_tests.bat -a            # Run all tests
+run_tests.bat -u            # Unit tests
+run_tests.bat -c            # Generate coverage report
 ```
 
-#### 使用 Makefile（macOS/Linux）
+#### Using Makefile (macOS/Linux)
 ```bash
-make test                    # 运行所有测试
-make test-unit              # 单元测试
-make test-widget            # 组件测试
-make test-coverage          # 覆盖率报告
+make test                    # Run all tests
+make test-unit              # Unit tests
+make test-widget            # Widget tests
+make test-coverage          # Coverage report
 ```
 
-#### 直接使用 Flutter 命令
+#### Direct Flutter Commands
 ```bash
-flutter test                # 运行所有测试
-flutter test --coverage     # 生成覆盖率报告
+flutter test                # Run all tests
+flutter test --coverage     # Generate coverage report
 ```
 
-### 开发工具
+### Development Tools
 
-项目提供了完整的开发工具链：
+The project provides a complete development toolchain:
 
-- **`run_tests.sh`** / **`run_tests.bat`**：跨平台测试脚本
-- **`Makefile`**：便捷的开发命令集合
-- **`TESTING.md`**：详细的测试指南和最佳实践
+- **`run_tests.sh`** / **`run_tests.bat`**: Cross-platform test scripts
+- **`Makefile`**: Convenient development command collection
+- **`TESTING.md`**: Detailed testing guide and best practices
 
-更多测试相关信息请参阅 [TESTING.md](TESTING.md)。
+For more testing-related information, please refer to [TESTING.md](TESTING.md).
 
-## 🔧 开发说明
+## 🔧 Development Notes
 
-### 项目结构
+### Project Structure
 ```
 lib/
-├── main.dart              # 应用入口和主录制界面
-├── file_list_page.dart     # 文件管理页面
-├── settings_page.dart      # 设置页面
-├── speed_calculator.dart   # 速度计算器
-├── speed_display_widget.dart # 速度显示组件
-├── video_recorder.dart     # 视频录制器
-├── video_thumbnail_manager.dart # 视频缩略图管理
-└── video_thumbnail_widget.dart # 视频缩略图组件
+├── main.dart              # Application entry and main recording interface
+├── file_list_page.dart     # File management page
+├── settings_page.dart      # Settings page
+├── speed_calculator.dart   # Speed calculator
+├── speed_display_widget.dart # Speed display widget
+├── video_recorder.dart     # Video recorder
+├── video_thumbnail_manager.dart # Video thumbnail management
+└── video_thumbnail_widget.dart # Video thumbnail widget
 
 test/
-├── integration_test.dart   # 集成测试
-├── speed_calculator_test.dart # 速度计算器测试
-├── speed_display_widget_test.dart # 速度显示组件测试
-├── video_recorder_test.dart # 视频录制器测试
-├── video_thumbnail_manager_test.dart # 缩略图管理测试
-└── widget_test.dart        # 基本组件测试
+├── integration_test.dart   # Integration tests
+├── speed_calculator_test.dart # Speed calculator tests
+├── speed_display_widget_test.dart # Speed display widget tests
+├── video_recorder_test.dart # Video recorder tests
+├── video_thumbnail_manager_test.dart # Thumbnail management tests
+└── widget_test.dart        # Basic widget tests
 ```
 
-### 关键特性实现
-- **视频录制**：使用 Camera 插件实现高质量视频录制
-- **文件管理**：自定义文件浏览器，支持多种操作
-- **设置持久化**：使用 SharedPreferences 保存用户偏好
-- **权限处理**：智能的权限请求和状态管理
-- **UI 优化**：响应式设计，适配不同屏幕尺寸
-- **测试覆盖**：完整的单元测试、组件测试和集成测试
+### Key Feature Implementation
+- **Video Recording**: High-quality video recording using Camera plugin
+- **File Management**: Custom file browser supporting various operations
+- **Settings Persistence**: User preference saving using SharedPreferences
+- **Permission Handling**: Smart permission requests and status management
+- **UI Optimization**: Responsive design adapting to different screen sizes
+- **Test Coverage**: Complete unit tests, widget tests, and integration tests
 
-## 📄 许可证
+## 📄 License
 
-本项目采用 MIT 许可证，详情请参阅 [LICENSE](LICENSE) 文件。
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## 🤝 贡献
+## 🤝 Contributing
 
-欢迎提交 Issue 和 Pull Request 来帮助改进这个项目！
+Welcome to submit Issues and Pull Requests to help improve this project!
 
-## 📞 联系方式
+## 📞 Contact
 
-如有问题或建议，请通过以下方式联系：
-- 提交 GitHub Issue
-- 发送邮件至项目维护者
+If you have any questions or suggestions, please contact us through:
+- Submit GitHub Issues
+- Send email to project maintainers
 
 ---
 
-**VeloMemo** - 让每一次行程都有记录 🚗📹
+**VeloMemo** - Record Every Journey 🚗📹
