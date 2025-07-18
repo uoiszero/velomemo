@@ -82,7 +82,7 @@ class VideoRecorder {
       // 从设置中加载分辨率和摄像头选择
       final prefs = await SharedPreferences.getInstance();
       final resolutionIndex = prefs.getInt('camera_resolution') ?? 1;
-      final cameraIndex = prefs.getInt('selected_camera') ?? _getDefaultCameraIndex(cameras);
+      final cameraIndex = prefs.getInt('selected_camera') ?? await _getDefaultCameraIndex(cameras);
       
       ResolutionPreset resolution;
       switch (resolutionIndex) {
@@ -111,7 +111,7 @@ class VideoRecorder {
       // 确保摄像头索引有效
       int validCameraIndex = cameraIndex;
       if (cameraIndex >= cameras.length || cameraIndex < 0) {
-        validCameraIndex = _getDefaultCameraIndex(cameras);
+        validCameraIndex = await _getDefaultCameraIndex(cameras);
         await prefs.setInt('selected_camera', validCameraIndex);
       }
       
@@ -138,16 +138,37 @@ class VideoRecorder {
   }
   
   /// 获取默认摄像头索引
-  int _getDefaultCameraIndex(List<CameraDescription> cameras) {
+  /// 优先从设置中读取保存的摄像头索引，如果没有则选择后置摄像头
+  Future<int> _getDefaultCameraIndex(List<CameraDescription> cameras) async {
     if (cameras.isEmpty) return 0;
     
-    // 优先选择后置摄像头
+    try {
+      // 从 SharedPreferences 中读取保存的摄像头索引
+      final prefs = await SharedPreferences.getInstance();
+      final savedCameraIndex = prefs.getInt('selected_camera');
+      
+      // 如果有保存的索引且在有效范围内，直接使用
+      if (savedCameraIndex != null && 
+          savedCameraIndex >= 0 && 
+          savedCameraIndex < cameras.length) {
+        print('使用保存的摄像头索引: $savedCameraIndex');
+        return savedCameraIndex;
+      }
+      
+      print('未找到有效的保存摄像头索引，使用默认选择逻辑');
+    } catch (e) {
+      print('读取保存的摄像头索引失败: $e，使用默认选择逻辑');
+    }
+    
+    // 如果没有保存的索引或读取失败，优先选择后置摄像头
     for (int i = 0; i < cameras.length; i++) {
       if (cameras[i].lensDirection == CameraLensDirection.back) {
+        print('选择默认后置摄像头，索引: $i');
         return i;
       }
     }
     
+    print('使用第一个可用摄像头，索引: 0');
     return 0;
   }
   
