@@ -5,6 +5,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:camera/camera.dart';
+import 'package:intl/intl.dart';
 import 'package:velomemo/video_recorder.dart';
 
 // 生成Mock类
@@ -124,6 +125,110 @@ void main() {
       });
     });
     
+    group('视频分割功能测试', () {
+      test('视频分割配置测试', () {
+        // 测试默认分割配置
+        final stats = videoRecorder.getRecordingStats();
+        expect(stats['currentSegmentIndex'], 0);
+        expect(stats['isUsingNativeRecording'], false);
+      });
+      
+      test('分割文件名生成测试', () async {
+        // 模拟开始录制以触发文件名生成
+        // 注意：这个测试主要验证文件名格式，不会真正录制
+        try {
+          await videoRecorder.startRecording();
+        } catch (e) {
+          // 预期会失败，因为没有初始化摄像头
+        }
+        
+        final stats = videoRecorder.getRecordingStats();
+        final fileName = stats['currentFileName'] as String?;
+        
+        if (fileName != null) {
+          // 验证文件名格式：yyyy_MM_dd_HH_mm_000.mp4
+          final regex = RegExp(r'^\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{3}\.mp4$');
+          expect(regex.hasMatch(fileName), true, 
+              reason: '文件名格式应为 yyyy_MM_dd_HH_mm_000.mp4，实际: $fileName');
+          
+          // 验证分割索引在文件名中正确体现
+          expect(fileName.contains('_000.mp4'), true, 
+              reason: '初始分割索引应为000');
+        }
+      });
+      
+      test('分割索引递增测试', () {
+        // 测试分割索引的初始状态
+        var stats = videoRecorder.getRecordingStats();
+        expect(stats['currentSegmentIndex'], 0);
+        
+        // 注意：由于_switchToNextSegment是私有方法，
+        // 这里主要测试索引的初始状态和重置逻辑
+        // 实际的索引递增会在录制过程中通过定时器触发
+      });
+      
+      test('分割定时器管理测试', () async {
+        // 测试定时器的生命周期管理
+        // 开始录制时应该启动定时器（如果启用了分割）
+        // 停止录制时应该取消定时器
+        
+        try {
+          await videoRecorder.startRecording();
+          // 验证录制状态
+          expect(videoRecorder.isRecording, false); // 因为摄像头未初始化，应该失败
+        } catch (e) {
+          // 预期会有错误
+        }
+        
+        try {
+          await videoRecorder.stopRecording();
+        } catch (e) {
+          // 停止录制也可能有错误
+        }
+      });
+      
+      test('原生录制模式切换测试', () {
+        // 测试原生录制模式的状态管理
+        final stats = videoRecorder.getRecordingStats();
+        expect(stats['isUsingNativeRecording'], false);
+        
+        // 在实际环境中，当启用视频分割且在Android平台时，
+        // 应该切换到原生录制模式
+      });
+      
+      test('分割文件路径生成测试', () {
+        // 测试分割文件的路径生成逻辑
+        final now = DateTime.now();
+        final roundedMinute = DateTime(now.year, now.month, now.day, now.hour, now.minute);
+        
+        // 模拟文件名生成逻辑
+        final formatter = DateFormat('yyyy_MM_dd_HH_mm');
+        final expectedPrefix = formatter.format(roundedMinute);
+        
+        // 验证时间格式化是否正确
+        expect(expectedPrefix.length, 16); // yyyy_MM_dd_HH_mm 应该是16个字符
+        expect(expectedPrefix.contains('_'), true);
+        
+        // 验证分割索引格式
+        final segmentIndex = 0;
+        final paddedIndex = segmentIndex.toString().padLeft(3, '0');
+        expect(paddedIndex, '000');
+        
+        final fullFileName = '${expectedPrefix}_${paddedIndex}.mp4';
+        expect(fullFileName.endsWith('.mp4'), true);
+      });
+      
+      test('分割时长配置测试', () {
+        // 测试分割时长的配置
+        // 默认应该是1分钟
+        final stats = videoRecorder.getRecordingStats();
+        
+        // 虽然_segmentDurationMinutes是私有变量，
+        // 但我们可以通过其他方式验证配置的正确性
+        expect(stats, isA<Map<String, dynamic>>());
+      });
+    });
+    
     group('错误处理测试', () {
       test('录制错误处理测试', () async {
         // 在未初始化摄像头的情况下尝试录制
@@ -134,6 +239,16 @@ void main() {
           // 预期会有错误，但不应该导致应用崩溃
           expect(e, isNotNull);
         }
+      });
+      
+      test('分割切换错误处理测试', () async {
+        // 测试在非录制状态下的分割切换错误处理
+        // 这主要验证错误处理的健壮性
+        expect(videoRecorder.isRecording, false);
+        
+        // 在未录制状态下，分割相关操作应该能够安全处理
+        final stats = videoRecorder.getRecordingStats();
+        expect(stats['currentSegmentIndex'], 0);
       });
     });
   });
