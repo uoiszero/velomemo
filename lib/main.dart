@@ -621,8 +621,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             // 录制时间水印
             if (_isRecording)
               Positioned(
-                top: 50,
-                right: 20,
+                top: 62,
+                right: 32,
                 child: Text(
                   _formatCurrentDateTime(),
                   style: const TextStyle(
@@ -901,8 +901,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               // 速度显示组件（录制时显示）
               if (_isRecording && _isSpeedTrackingEnabled)
                 Positioned(
-                  top: 140,
-                  right: 20,
+                  top: 152,
+                  right: 32,
                   child: SpeedDisplayWidget(
                     showDetailedInfo: false,
                     backgroundColor: Colors.black.withValues(alpha: 0.7),
