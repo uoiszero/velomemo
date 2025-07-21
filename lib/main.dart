@@ -69,6 +69,59 @@ class MyApp extends StatelessWidget {
   }
 }
 
+/// 自定义圆角边框绘制器
+/// 用于绘制具有内侧圆角的录制指示边框
+class RoundedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double borderRadius;
+
+  /// 构造函数
+  /// [color] 边框颜色
+  /// [strokeWidth] 边框宽度
+  /// [borderRadius] 圆角半径
+  RoundedBorderPainter({
+    required this.color,
+    required this.strokeWidth,
+    required this.borderRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    // 创建圆角矩形路径，四边向内收缩12像素
+    const inset = 12.0; // 内收缩像素
+    final rect = Rect.fromLTWH(
+      strokeWidth / 2 + inset,
+      strokeWidth / 2 + inset,
+      size.width - strokeWidth - (inset * 2),
+      size.height - strokeWidth - (inset * 2),
+    );
+
+    final rrect = RRect.fromRectAndRadius(
+      rect,
+      Radius.circular(borderRadius),
+    );
+
+    // 绘制圆角边框
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    if (oldDelegate is RoundedBorderPainter) {
+      return oldDelegate.color != color ||
+          oldDelegate.strokeWidth != strokeWidth ||
+          oldDelegate.borderRadius != borderRadius;
+    }
+    return true;
+  }
+}
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -557,12 +610,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             // 红色边框覆盖层 - 录制指示灯（即使屏幕调暗也保持可见）
             if (_isRecording)
               Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.red.withValues(alpha: _recordingAnimation.value),
-                      width: _videoRecorder.isScreenDimmed ? 12 : 8, // 屏幕调暗时边框更粗，更明显
-                    ),
+                child: CustomPaint(
+                  painter: RoundedBorderPainter(
+                    color: Colors.red.withValues(alpha: _recordingAnimation.value),
+                    strokeWidth: _videoRecorder.isScreenDimmed ? 12 : 8,
+                    borderRadius: 24.0, // 内侧圆角半径
                   ),
                 ),
               ),
