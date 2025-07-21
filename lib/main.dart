@@ -233,6 +233,14 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       
       if (cameras.isNotEmpty) {
         await _videoRecorder.initializeCamera(cameras);
+        
+        // 检查视频分割功能支持状态
+        await _videoRecorder.checkVideoSegmentationSupport();
+        
+        // 触发UI更新以显示最新状态
+        if (mounted) {
+          setState(() {});
+        }
       }
     } else {
       print('权限被拒绝 - 摄像头: $cameraStatus, 麦克风: $microphoneStatus, 存储: $storageStatus');
@@ -347,8 +355,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     // 重新初始化VideoRecorder
     await _videoRecorder.reinitializeCamera();
     
+    // 检查视频分割功能支持状态
+    await _videoRecorder.checkVideoSegmentationSupport();
+    
     // 重新计算存储空间和录制时长
     await _updateStorageInfo();
+    
+    // 触发UI更新以显示最新状态
+    if (mounted) {
+      setState(() {});
+    }
   }
   
 
@@ -560,9 +576,57 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 ),
               ],
             ),
+            const SizedBox(height: 6),
+            _buildVideoSegmentationStatus(),
           ],
         ),
       ),
+    );
+  }
+
+  /// 构建视频分割状态显示组件
+  Widget _buildVideoSegmentationStatus() {
+    // 获取视频分割状态信息
+    final isEnabled = _videoRecorder.isVideoSegmentationEnabled;
+    final isSupported = _videoRecorder.isVideoSegmentationSupported;
+    final segmentDuration = _videoRecorder.segmentDurationMinutes;
+    
+    // 确定状态文本和颜色
+    String statusText;
+    Color statusColor;
+    IconData statusIcon;
+    
+    if (!isSupported) {
+      statusText = '视频分割: 设备不支持';
+      statusColor = Colors.orange;
+      statusIcon = Icons.warning;
+    } else if (isEnabled) {
+      statusText = '视频分割: 已启用 (${segmentDuration}分钟)';
+      statusColor = Colors.green;
+      statusIcon = Icons.video_library;
+    } else {
+      statusText = '视频分割: 已禁用';
+      statusColor = Colors.grey;
+      statusIcon = Icons.video_library_outlined;
+    }
+    
+    return Row(
+      children: [
+        Icon(
+          statusIcon,
+          color: statusColor,
+          size: 16,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          statusText,
+          style: TextStyle(
+            color: statusColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 

@@ -31,6 +31,7 @@ class VideoRecorder {
   int _segmentDurationMinutes = 1;
   int _currentSegmentIndex = 0;
   bool _isUsingNativeRecording = false;
+  bool _isVideoSegmentationSupported = false;
   
   // Platform Channel for native video segmentation
   static const platform = MethodChannel('com.yueao.velomemo/video_recorder');
@@ -58,9 +59,56 @@ class VideoRecorder {
   /// 获取屏幕调暗状态
   bool get isScreenDimmed => _isScreenDimmed;
   
+  /// 获取视频分割功能是否启用
+  bool get isVideoSegmentationEnabled => _enableVideoSegmentation;
+  
+  /// 获取视频分割功能是否被设备支持
+  bool get isVideoSegmentationSupported => _isVideoSegmentationSupported;
+  
+  /// 获取当前分割时长（分钟）
+  int get segmentDurationMinutes => _segmentDurationMinutes;
+  
   /// 设置权限状态
   void setPermissionGranted(bool granted) {
     _isPermissionGranted = granted;
+  }
+  
+  /// 设置视频分割功能启用状态
+  /// [enabled] 是否启用视频分割功能
+  void setVideoSegmentationEnabled(bool enabled) {
+    _enableVideoSegmentation = enabled;
+    print('视频分割功能已${enabled ? "启用" : "禁用"}');
+  }
+  
+  /// 设置视频分割时长
+  /// [minutes] 分割时长（分钟），必须大于0
+  void setSegmentDuration(int minutes) {
+    if (minutes <= 0) {
+      print('分割时长必须大于0分钟');
+      return;
+    }
+    _segmentDurationMinutes = minutes;
+    print('视频分割时长已设置为${minutes}分钟');
+  }
+  
+  /// 检查设备是否支持视频分割功能
+  /// 需要Android API 26+（Android 8.0）
+  Future<bool> checkVideoSegmentationSupport() async {
+    if (!Platform.isAndroid) {
+      _isVideoSegmentationSupported = false;
+      return false;
+    }
+    
+    try {
+      final result = await platform.invokeMethod('checkApiLevel');
+      _isVideoSegmentationSupported = result == true;
+      print('设备${_isVideoSegmentationSupported ? "支持" : "不支持"}视频分割功能');
+      return _isVideoSegmentationSupported;
+    } catch (e) {
+      print('检查视频分割支持失败: $e');
+      _isVideoSegmentationSupported = false;
+      return false;
+    }
   }
   
   /// 初始化摄像头
@@ -213,9 +261,22 @@ class VideoRecorder {
       final formatter = DateFormat('yyyy_MM_dd_HH_mm');
       _customFileName = '${formatter.format(roundedMinute)}_${_currentSegmentIndex.toString().padLeft(3, '0')}.mp4';
       
-      // 如果启用了视频分割，使用Platform Channel启动原生录制
+      // 检查是否可以使用视频分割功能
+      bool canUseSegmentation = false;
       if (_enableVideoSegmentation && Platform.isAndroid) {
+        // 检查设备是否支持视频分割
+        canUseSegmentation = await checkVideoSegmentationSupport();
+        if (!canUseSegmentation) {
+          _notifyMessage('设备不支持视频分割功能，将使用普通录制模式');
+        }
+      }
+      
+      // 根据支持情况选择录制方式
+      if (canUseSegmentation) {
         _isUsingNativeRecording = await _startNativeVideoRecording();
+        if (!_isUsingNativeRecording) {
+          _notifyMessage('原生录制启动失败，已回退到普通录制模式');
+        }
       } else {
         // 使用Flutter Camera插件录制
         await _cameraController!.startVideoRecording();
@@ -296,10 +357,19 @@ class VideoRecorder {
       });
       
       _customFileName = newFileName;
+      _notifyMessage('已切换到第${_currentSegmentIndex + 1}段视频');
       print('已切换到下一个视频分割: $newFilePath');
       
     } catch (e) {
       print('切换视频分割失败: $e');
+      _notifyMessage('视频分割切换失败，录制将继续但可能无法分割');
+      
+      // 如果分割失败，考虑停止分割定时器以避免重复错误
+      if (e.toString().contains('UNSUPPORTED')) {
+        _segmentTimer?.cancel();
+        _notifyMessage('设备不支持视频分割，已停用分割功能');
+        _enableVideoSegmentation = false;
+      }
     }
   }
   
@@ -505,6 +575,9 @@ class VideoRecorder {
       'currentSegmentIndex': _currentSegmentIndex,
       'isUsingNativeRecording': _isUsingNativeRecording,
       'isScreenDimmed': _isScreenDimmed,
+      'isVideoSegmentationEnabled': _enableVideoSegmentation,
+      'isVideoSegmentationSupported': _isVideoSegmentationSupported,
+      'segmentDurationMinutes': _segmentDurationMinutes,
     };
   }
 }

@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io';
 import 'main.dart';
 import 'utils.dart';
+import 'video_recorder.dart';
 
 /// 设置页面
 class SettingsPage extends StatefulWidget {
@@ -22,6 +23,12 @@ class _SettingsPageState extends State<SettingsPage> {
   String _buildNumber = '1';
   String _appName = '行车记录仪';
   String _videoStoragePath = ''; // 视频存储路径
+  
+  // 视频分割相关状态
+  bool _isVideoSegmentationEnabled = true;
+  bool _isVideoSegmentationSupported = false;
+  int _segmentDurationMinutes = 1;
+  final VideoRecorder _videoRecorder = VideoRecorder.instance;
   
   // 分辨率选项映射
   final Map<ResolutionPreset, String> _resolutionNames = {
@@ -48,6 +55,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _loadSettings();
     _loadAppInfo();
     _loadVideoStoragePath();
+    _loadVideoSegmentationSettings();
   }
   
   /// 加载应用信息
@@ -77,6 +85,80 @@ class _SettingsPageState extends State<SettingsPage> {
       setState(() {
         _videoStoragePath = '获取路径失败';
       });
+    }
+  }
+  
+  /// 加载视频分割设置
+  Future<void> _loadVideoSegmentationSettings() async {
+    try {
+      // 检查设备是否支持视频分割
+      await _videoRecorder.checkVideoSegmentationSupport();
+      
+      setState(() {
+        _isVideoSegmentationEnabled = _videoRecorder.isVideoSegmentationEnabled;
+        _isVideoSegmentationSupported = _videoRecorder.isVideoSegmentationSupported;
+        _segmentDurationMinutes = _videoRecorder.segmentDurationMinutes;
+      });
+    } catch (e) {
+      print('加载视频分割设置失败: $e');
+    }
+  }
+  
+  /// 保存视频分割启用状态
+  Future<void> _saveVideoSegmentationEnabled(bool enabled) async {
+    try {
+      _videoRecorder.setVideoSegmentationEnabled(enabled);
+      setState(() {
+        _isVideoSegmentationEnabled = enabled;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(enabled ? '视频分割已启用' : '视频分割已禁用'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('保存视频分割设置失败: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('设置保存失败'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+  
+  /// 保存视频分割时长
+  Future<void> _saveSegmentDuration(int minutes) async {
+    try {
+      _videoRecorder.setSegmentDuration(minutes);
+      setState(() {
+        _segmentDurationMinutes = minutes;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('分割时长已设置为 $minutes 分钟'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('保存分割时长失败: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('设置保存失败'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
   
@@ -383,6 +465,130 @@ class _SettingsPageState extends State<SettingsPage> {
                 contentPadding: EdgeInsets.zero,
               );
             }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  /// 构建视频分割设置卡片
+  Widget _buildVideoSegmentationSettings() {
+    return Card(
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '视频分割设置',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _isVideoSegmentationSupported
+                  ? '将长视频自动分割为多个小文件，便于管理和传输。'
+                  : '当前设备不支持视频分割功能（需要 Android 8.0 或更高版本）。',
+              style: TextStyle(
+                fontSize: 14,
+                color: _isVideoSegmentationSupported ? Colors.grey : Colors.orange,
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // 设备支持状态显示
+            Row(
+              children: [
+                Icon(
+                  _isVideoSegmentationSupported ? Icons.check_circle : Icons.warning,
+                  color: _isVideoSegmentationSupported ? Colors.green : Colors.orange,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _isVideoSegmentationSupported ? '设备支持视频分割' : '设备不支持视频分割',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _isVideoSegmentationSupported ? Colors.green : Colors.orange,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            
+            if (_isVideoSegmentationSupported) ...[
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              
+              // 启用/禁用开关
+              SwitchListTile(
+                title: const Text('启用视频分割'),
+                subtitle: Text(
+                  _isVideoSegmentationEnabled
+                      ? '录制时自动分割视频文件'
+                      : '录制单个连续视频文件',
+                ),
+                value: _isVideoSegmentationEnabled,
+                onChanged: (bool value) {
+                  _saveVideoSegmentationEnabled(value);
+                },
+                contentPadding: EdgeInsets.zero,
+              ),
+              
+              if (_isVideoSegmentationEnabled) ...[
+                const SizedBox(height: 8),
+                const Divider(),
+                const SizedBox(height: 8),
+                
+                // 分割时长选择
+                const Text(
+                  '分割时长',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '选择每个视频片段的时长',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // 时长选项
+                ...[1, 2, 3, 5, 10].map((minutes) {
+                  return RadioListTile<int>(
+                    title: Text('$minutes 分钟'),
+                    subtitle: Text(
+                      minutes <= 2
+                          ? '适合短途行程，文件较小'
+                          : minutes <= 5
+                              ? '平衡文件大小和管理便利性'
+                              : '适合长途行程，减少文件数量',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    value: minutes,
+                    groupValue: _segmentDurationMinutes,
+                    onChanged: (int? value) {
+                      if (value != null) {
+                        _saveSegmentDuration(value);
+                      }
+                    },
+                    contentPadding: EdgeInsets.zero,
+                  );
+                }).toList(),
+              ],
+            ],
           ],
         ),
       ),
@@ -728,6 +934,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   _buildCameraSelector(),
                   _buildResolutionSelector(),
+                  _buildVideoSegmentationSettings(),
                   _buildStorageInfo(),
                   _buildOtherSettings(),
                   _buildAboutInfo(),

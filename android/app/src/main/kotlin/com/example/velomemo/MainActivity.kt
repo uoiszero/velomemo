@@ -48,6 +48,9 @@ class MainActivity : FlutterActivity() {
                 "stopRecording" -> {
                     stopRecording(result)
                 }
+                "checkApiLevel" -> {
+                    checkApiLevel(result)
+                }
                 else -> {
                     result.notImplemented()
                 }
@@ -194,6 +197,21 @@ class MainActivity : FlutterActivity() {
             mediaRecorder = null
             isRecording = false
             result?.error("STOP_ERROR", "Failed to stop recording: ${e.message}", null)
+        }
+    }
+    
+    /**
+     * 检查设备API级别是否支持视频分割功能
+     * 需要Android API 26+（Android 8.0）才能使用setNextOutputFile
+     */
+    private fun checkApiLevel(result: MethodChannel.Result) {
+        try {
+            val isSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+            Log.d("VideoRecorder", "API Level: ${Build.VERSION.SDK_INT}, Video segmentation supported: $isSupported")
+            result.success(isSupported)
+        } catch (e: Exception) {
+            Log.e("VideoRecorder", "Failed to check API level", e)
+            result.error("CHECK_FAILED", "Failed to check API level: ${e.message}", null)
         }
     }
     

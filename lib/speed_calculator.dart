@@ -136,7 +136,7 @@ class SpeedCalculator {
           // 应用传感器修正
           _applySensorCorrection();
           
-          print('GPS速度: ${_gpsSpeed.toStringAsFixed(2)} m/s, 修正后速度: ${_correctedSpeed.toStringAsFixed(2)} m/s');
+          // print('GPS速度: ${_gpsSpeed.toStringAsFixed(2)} m/s, 修正后速度: ${_correctedSpeed.toStringAsFixed(2)} m/s');
         }
       }
       

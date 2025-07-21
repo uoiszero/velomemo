@@ -127,10 +127,54 @@ void main() {
     
     group('视频分割功能测试', () {
       test('视频分割配置测试', () {
-        // 测试默认分割配置
+        // 测试默认配置
         final stats = videoRecorder.getRecordingStats();
+        
+        // 验证默认启用分割功能
+        expect(stats.containsKey('currentSegmentIndex'), true);
         expect(stats['currentSegmentIndex'], 0);
-        expect(stats['isUsingNativeRecording'], false);
+        expect(stats.containsKey('isVideoSegmentationEnabled'), true);
+        expect(stats['isVideoSegmentationEnabled'], true);
+        
+        // 验证默认分割时长为1分钟
+        expect(stats.containsKey('segmentDurationMinutes'), true);
+        expect(stats['segmentDurationMinutes'], 1);
+        
+        // 验证支持状态字段存在
+        expect(stats.containsKey('isVideoSegmentationSupported'), true);
+      });
+      
+      test('视频分割功能配置方法测试', () {
+        // 测试启用/禁用分割功能
+        videoRecorder.setVideoSegmentationEnabled(false);
+        expect(videoRecorder.isVideoSegmentationEnabled, false);
+        
+        videoRecorder.setVideoSegmentationEnabled(true);
+        expect(videoRecorder.isVideoSegmentationEnabled, true);
+        
+        // 测试设置分割时长
+        videoRecorder.setSegmentDuration(5);
+        expect(videoRecorder.segmentDurationMinutes, 5);
+        
+        // 测试无效分割时长
+        videoRecorder.setSegmentDuration(0);
+        expect(videoRecorder.segmentDurationMinutes, 5); // 应该保持之前的值
+        
+        videoRecorder.setSegmentDuration(-1);
+        expect(videoRecorder.segmentDurationMinutes, 5); // 应该保持之前的值
+      });
+      
+      test('API版本检查测试', () async {
+        // 测试API版本检查方法
+        // 注意：在测试环境中，这个方法可能会失败，因为没有真实的Android环境
+        try {
+          final isSupported = await videoRecorder.checkVideoSegmentationSupport();
+          expect(isSupported, isA<bool>());
+          expect(videoRecorder.isVideoSegmentationSupported, isSupported);
+        } catch (e) {
+          // 在测试环境中预期会失败
+          expect(videoRecorder.isVideoSegmentationSupported, false);
+        }
       });
       
       test('分割文件名生成测试', () async {
