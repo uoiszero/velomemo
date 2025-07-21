@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:open_file/open_file.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'video_thumbnail_manager.dart';
 import 'video_thumbnail_widget.dart';
+import 'utils.dart';
 
 /// 文件列表页面
 class FileListPage extends StatefulWidget {
@@ -65,35 +65,7 @@ class _FileListPageState extends State<FileListPage> {
     await prefs.setBool('file_list_sort_ascending', _isAscending);
   }
   
-  /// 获取视频存储目录
-  Future<Directory> _getVideoDirectory() async {
-    try {
-      // 优先尝试外部存储的 Movies 目录
-      final externalDir = await getExternalStorageDirectory();
-      if (externalDir != null) {
-        final moviesDir = Directory('${externalDir.parent.parent.parent.parent.path}/Movies/VeloMemo');
-        if (await moviesDir.exists() || await moviesDir.create(recursive: true).then((_) => true).catchError((_) => false)) {
-          return moviesDir;
-        }
-        
-        // 如果 Movies 目录不可用，尝试 DCIM 目录
-        final dcimDir = Directory('${externalDir.parent.parent.parent.parent.path}/DCIM/VeloMemo');
-        if (await dcimDir.exists() || await dcimDir.create(recursive: true).then((_) => true).catchError((_) => false)) {
-          return dcimDir;
-        }
-      }
-    } catch (e) {
-      print('无法访问外部存储: $e');
-    }
-    
-    // 回退到应用文档目录
-    final appDir = await getApplicationDocumentsDirectory();
-    final videoDir = Directory('${appDir.path}/VeloMemo');
-    if (!await videoDir.exists()) {
-      await videoDir.create(recursive: true);
-    }
-    return videoDir;
-  }
+
 
   /// 加载文件列表
   Future<void> _loadFiles() async {
@@ -103,7 +75,7 @@ class _FileListPageState extends State<FileListPage> {
     
     try {
       // 获取视频存储目录
-      final directory = await _getVideoDirectory();
+      final directory = await getVideoDirectory();
       _currentPath = directory.path;
       
       // 获取目录下的所有文件

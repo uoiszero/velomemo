@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:screen_brightness/screen_brightness.dart';
+import 'utils.dart';
 
 /// 视频录制器
 /// 负责管理摄像头初始化、视频录制、文件管理等功能
@@ -246,7 +246,7 @@ class VideoRecorder {
   /// 启动原生视频录制
   Future<bool> _startNativeVideoRecording() async {
     try {
-      final directory = await _getVideoDirectory();
+      final directory = await getVideoDirectory();
       final filePath = '${directory.path}/$_customFileName';
       
       await platform.invokeMethod('startRecording', {
@@ -287,7 +287,7 @@ class VideoRecorder {
       final formatter = DateFormat('yyyy_MM_dd_HH_mm');
       final newFileName = '${formatter.format(roundedMinute)}_${_currentSegmentIndex.toString().padLeft(3, '0')}.mp4';
       
-      final directory = await _getVideoDirectory();
+      final directory = await getVideoDirectory();
       final newFilePath = '${directory.path}/$newFileName';
       
       // 调用原生方法切换到下一个文件
@@ -324,7 +324,7 @@ class VideoRecorder {
         // 如果有自定义文件名，则重命名文件
         if (_customFileName != null) {
           try {
-            final directory = await _getVideoDirectory();
+            final directory = await getVideoDirectory();
             final newPath = '${directory.path}/$_customFileName';
             final originalFile = File(video.path);
             await originalFile.copy(newPath);
@@ -426,49 +426,7 @@ class VideoRecorder {
     print('录制错误: $error');
   }
   
-  /// 获取VeloMemo专用视频存放目录
-  Future<Directory> _getVideoDirectory() async {
-    try {
-      Directory baseDir;
-      
-      if (Platform.isAndroid) {
-        final externalDir = await getExternalStorageDirectory();
-        if (externalDir != null) {
-          final moviesDir = Directory('${externalDir.parent.parent.parent.parent.path}/Movies');
-          if (await moviesDir.exists()) {
-            baseDir = moviesDir;
-          } else {
-            final dcimDir = Directory('${externalDir.parent.parent.parent.parent.path}/DCIM');
-            if (await dcimDir.exists()) {
-              baseDir = dcimDir;
-            } else {
-              baseDir = await getApplicationDocumentsDirectory();
-            }
-          }
-        } else {
-          baseDir = await getApplicationDocumentsDirectory();
-        }
-      } else {
-        baseDir = await getApplicationDocumentsDirectory();
-      }
-      
-      final veloMemoDir = Directory('${baseDir.path}/VeloMemo');
-      if (!await veloMemoDir.exists()) {
-        await veloMemoDir.create(recursive: true);
-        print('已创建VeloMemo视频目录: ${veloMemoDir.path}');
-      }
-      
-      return veloMemoDir;
-    } catch (e) {
-      print('获取VeloMemo视频目录失败: $e，使用应用文档目录');
-      final fallbackDir = await getApplicationDocumentsDirectory();
-      final veloMemoDir = Directory('${fallbackDir.path}/VeloMemo');
-      if (!await veloMemoDir.exists()) {
-        await veloMemoDir.create(recursive: true);
-      }
-      return veloMemoDir;
-    }
-  }
+
   
   /// 添加录制状态监听器
   void addRecordingStateListener(Function(bool) listener) {

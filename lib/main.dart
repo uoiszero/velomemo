@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -15,6 +14,7 @@ import 'settings_page.dart';
 import 'speed_calculator.dart';
 import 'speed_display_widget.dart';
 import 'video_recorder.dart';
+import 'utils.dart';
 
 /// 全局摄像头列表
 List<CameraDescription> cameras = [];
@@ -298,55 +298,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     await _updateStorageInfo();
   }
   
-  /// 获取VeloMemo专用视频存放目录
-  Future<Directory> _getVideoDirectory() async {
-    try {
-      Directory baseDir;
-      
-      // 在 Android 上，尝试获取外部存储的 Movies 目录
-      if (Platform.isAndroid) {
-        final externalDir = await getExternalStorageDirectory();
-        if (externalDir != null) {
-          // 优先使用 Movies 目录
-          final moviesDir = Directory('${externalDir.parent.parent.parent.parent.path}/Movies');
-          if (await moviesDir.exists()) {
-            baseDir = moviesDir;
-          } else {
-            // 如果 Movies 目录不存在，使用 DCIM 目录
-            final dcimDir = Directory('${externalDir.parent.parent.parent.parent.path}/DCIM');
-            if (await dcimDir.exists()) {
-              baseDir = dcimDir;
-            } else {
-              // 最后备选方案：使用应用文档目录
-              baseDir = await getApplicationDocumentsDirectory();
-            }
-          }
-        } else {
-          baseDir = await getApplicationDocumentsDirectory();
-        }
-      } else {
-        // 使用应用文档目录
-        baseDir = await getApplicationDocumentsDirectory();
-      }
-      
-      // 在基础目录下创建 VeloMemo 子目录
-      final veloMemoDir = Directory('${baseDir.path}/VeloMemo');
-      if (!await veloMemoDir.exists()) {
-        await veloMemoDir.create(recursive: true);
-        print('已创建VeloMemo视频目录: ${veloMemoDir.path}');
-      }
-      
-      return veloMemoDir;
-    } catch (e) {
-      print('获取VeloMemo视频目录失败: $e，使用应用文档目录');
-      final fallbackDir = await getApplicationDocumentsDirectory();
-      final veloMemoDir = Directory('${fallbackDir.path}/VeloMemo');
-      if (!await veloMemoDir.exists()) {
-        await veloMemoDir.create(recursive: true);
-      }
-      return veloMemoDir;
-    }
-  }
+
   
   /// 启动存储空间监控
   void _startStorageMonitoring() {
@@ -364,7 +316,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   /// 更新存储空间信息
   Future<void> _updateStorageInfo() async {
     try {
-      final directory = await _getVideoDirectory();
+      final directory = await getVideoDirectory();
       final freeSpace = await _getAvailableSpace(directory.path);
       
       final estimatedTime = await _calculateEstimatedRecordingTime(freeSpace);
