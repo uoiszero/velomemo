@@ -74,7 +74,7 @@ REM 运行单元测试
 :run_unit_tests
 call :print_info "运行单元测试..."
 
-set "unit_tests=test/speed_calculator_test.dart test/video_recorder_test.dart test/video_thumbnail_manager_test.dart"
+set "unit_tests=../test/speed_calculator_test.dart ../test/video_recorder_test.dart ../test/video_thumbnail_manager_test.dart"
 
 for %%t in (%unit_tests%) do (
     if exist "%%t" (
@@ -96,7 +96,7 @@ REM 运行组件测试
 :run_widget_tests
 call :print_info "运行组件测试..."
 
-set "widget_tests=test/speed_display_widget_test.dart test/widget_test.dart"
+set "widget_tests=../test/speed_display_widget_test.dart ../test/widget_test.dart"
 
 for %%t in (%widget_tests%) do (
     if exist "%%t" (
@@ -118,8 +118,8 @@ REM 运行集成测试
 :run_integration_tests
 call :print_info "运行集成测试..."
 
-if exist "test/integration_test.dart" (
-    flutter test test/integration_test.dart
+if exist "../test/integration_test.dart" (
+    flutter test ../test/integration_test.dart
     if errorlevel 1 (
         call :print_error "集成测试失败！"
         exit /b 1
@@ -150,7 +150,7 @@ goto :eof
 REM 主函数
 :main
 REM 检查是否在项目根目录
-if not exist "pubspec.yaml" (
+if not exist "..\pubspec.yaml" (
     call :print_error "请在 Flutter 项目根目录下运行此脚本"
     exit /b 1
 )

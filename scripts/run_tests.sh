@@ -78,9 +78,9 @@ run_unit_tests() {
     print_info "运行单元测试..."
     
     local unit_tests=(
-        "test/speed_calculator_test.dart"
-        "test/video_recorder_test.dart"
-        "test/video_thumbnail_manager_test.dart"
+        "../test/speed_calculator_test.dart"
+        "../test/video_recorder_test.dart"
+        "../test/video_thumbnail_manager_test.dart"
     )
     
     for test in "${unit_tests[@]}"; do
@@ -104,8 +104,8 @@ run_widget_tests() {
     print_info "运行组件测试..."
     
     local widget_tests=(
-        "test/speed_display_widget_test.dart"
-        "test/widget_test.dart"
+        "../test/speed_display_widget_test.dart"
+        "../test/widget_test.dart"
     )
     
     for test in "${widget_tests[@]}"; do
@@ -128,8 +128,8 @@ run_widget_tests() {
 run_integration_tests() {
     print_info "运行集成测试..."
     
-    if [ -f "test/integration_test.dart" ]; then
-        flutter test test/integration_test.dart
+    if [ -f "../test/integration_test.dart" ]; then
+        flutter test ../test/integration_test.dart
         if [ $? -eq 0 ]; then
             print_success "集成测试通过！"
         else
@@ -177,7 +177,7 @@ run_coverage() {
 # 主函数
 main() {
     # 检查是否在项目根目录
-    if [ ! -f "pubspec.yaml" ]; then
+    if [ ! -f "../pubspec.yaml" ]; then
         print_error "请在 Flutter 项目根目录下运行此脚本"
         exit 1
     fi

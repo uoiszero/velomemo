@@ -109,13 +109,13 @@ echo [INFO] 开始构建 %BUILD_MODE% APK...
 
 if "%BUILD_MODE%"=="debug" (
     flutter build apk --debug
-    set "APK_FILE=build\app\outputs\flutter-apk\app-debug.apk"
+    set "APK_FILE=..\build\app\outputs\flutter-apk\app-debug.apk"
 ) else if "%BUILD_MODE%"=="profile" (
     flutter build apk --profile
-    set "APK_FILE=build\app\outputs\flutter-apk\app-profile.apk"
+    set "APK_FILE=..\build\app\outputs\flutter-apk\app-profile.apk"
 ) else if "%BUILD_MODE%"=="release" (
     flutter build apk --release
-    set "APK_FILE=build\app\outputs\flutter-apk\app-release.apk"
+    set "APK_FILE=..\build\app\outputs\flutter-apk\app-release.apk"
 ) else (
     echo [ERROR] 无效的构建模式: %BUILD_MODE%
     goto error_exit
@@ -133,7 +133,7 @@ if not exist "%APK_FILE%" (
 )
 
 REM 复制到项目根目录
-set "OUTPUT_NAME=velomemo-%BUILD_MODE%.apk"
+set "OUTPUT_NAME=..\velomemo-%BUILD_MODE%.apk"
 copy "%APK_FILE%" "%OUTPUT_NAME%" >nul
 if errorlevel 1 (
     echo [ERROR] 复制APK文件失败
