@@ -15,6 +15,7 @@ import 'speed_calculator.dart';
 import 'speed_display_widget.dart';
 import 'video_recorder.dart';
 import 'utils.dart';
+import 'compass_widget.dart';
 
 /// 全局摄像头列表
 List<CameraDescription> cameras = [];
@@ -670,6 +671,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   child: CameraPreview(_videoRecorder.cameraController!),
                 ),
               ),
+            ),
+            // 方向指示器（在视频预览上方）
+            const Positioned(
+              top: 40,
+              left: 0,
+              right: 0,
+              child: CompassWidget(),
             ),
             // 红色边框覆盖层 - 录制指示灯（即使屏幕调暗也保持可见）
             if (_isRecording)
