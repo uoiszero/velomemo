@@ -56,7 +56,7 @@ get_dependencies() {
 # 构建APK
 build_apk() {
     local build_mode=$1
-    local output_dir="../build/app/outputs/flutter-apk"
+    local output_dir="build/app/outputs/flutter-apk"
     
     print_info "开始构建 ${build_mode} APK..."
     
@@ -86,7 +86,7 @@ build_apk() {
         print_info "文件大小: $file_size"
         
         # 复制到项目根目录
-        local output_name="../velomemo-${build_mode}.apk"
+        local output_name="velomemo-${build_mode}.apk"
         cp "$apk_file" "$output_name"
         print_success "APK 已复制到项目根目录: $output_name"
     else

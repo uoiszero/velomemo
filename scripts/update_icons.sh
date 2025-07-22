@@ -21,35 +21,35 @@ if ! command -v flutter &> /dev/null; then
 fi
 
 # 创建图标目录
-mkdir -p ../assets/icons
+mkdir -p assets/icons
 
 # 函数：生成默认图标
 generate_default_icon() {
     echo "🎯 生成默认 VeloMemo 图标..."
     
     # 检查是否存在自定义图标源文件
-    if [ -f "../assets/icons/custom_icon.svg" ]; then
+    if [ -f "assets/icons/custom_icon.svg" ]; then
         echo "📁 发现自定义图标: custom_icon.svg"
-        SOURCE_ICON="../assets/icons/custom_icon.svg"
-    elif [ -f "../assets/icons/custom_icon.png" ]; then
+        SOURCE_ICON="assets/icons/custom_icon.svg"
+    elif [ -f "assets/icons/custom_icon.png" ]; then
         echo "📁 发现自定义图标: custom_icon.png"
-        SOURCE_ICON="../assets/icons/custom_icon.png"
+        SOURCE_ICON="assets/icons/custom_icon.png"
     else
         echo "📁 使用默认图标设计"
-        SOURCE_ICON="../assets/icons/app_icon.svg"
+        SOURCE_ICON="assets/icons/app_icon.svg"
     fi
     
     # 生成主图标
     echo "🔄 转换主图标..."
-    magick "$SOURCE_ICON" -resize 1024x1024 ../assets/icons/app_icon.png
+    magick "$SOURCE_ICON" -resize 1024x1024 assets/icons/app_icon.png
     
     # 生成 Adaptive Icon 前景
     echo "🔄 转换 Adaptive Icon 前景..."
-    if [ -f "../assets/icons/app_icon_adaptive.svg" ]; then
-        magick ../assets/icons/app_icon_adaptive.svg -background transparent -resize 1024x1024 ../assets/icons/app_icon_adaptive.png
+    if [ -f "assets/icons/app_icon_adaptive.svg" ]; then
+        magick assets/icons/app_icon_adaptive.svg -background transparent -resize 1024x1024 assets/icons/app_icon_adaptive.png
     else
         # 如果没有专门的 adaptive 图标，使用主图标
-        cp ../assets/icons/app_icon.png ../assets/icons/app_icon_adaptive.png
+        cp assets/icons/app_icon.png assets/icons/app_icon_adaptive.png
     fi
 }
 
