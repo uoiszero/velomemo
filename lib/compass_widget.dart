@@ -19,6 +19,7 @@ class _CompassWidgetState extends State<CompassWidget>
   
   double _heading = 0.0; // 当前方向角度（0-360度）
   double _smoothedHeading = 0.0; // 平滑后的方向角度
+  double _animatedHeading = 0.0; // 动画中的方向角度
   
   // 传感器数据
   MagnetometerEvent? _lastMagnetometer;
@@ -26,6 +27,11 @@ class _CompassWidgetState extends State<CompassWidget>
   
   // 动画控制器
   late AnimationController _animationController;
+  late Animation<double> _headingAnimation;
+  
+  // 动画参数
+  static const Duration _animationDuration = Duration(milliseconds: 300);
+  static const Curve _animationCurve = Curves.easeOutCubic;
   
   // 方向名称映射
   static const Map<String, double> _directions = {
@@ -43,9 +49,26 @@ class _CompassWidgetState extends State<CompassWidget>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 100),
+      duration: _animationDuration,
       vsync: this,
     );
+    
+    // 初始化动画
+    _headingAnimation = Tween<double>(
+      begin: 0.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: _animationCurve,
+    ));
+    
+    // 监听动画值变化
+    _headingAnimation.addListener(() {
+      setState(() {
+        _updateAnimatedHeading();
+      });
+    });
+    
     _startSensorListening();
   }
 
@@ -91,7 +114,7 @@ class _CompassWidgetState extends State<CompassWidget>
     _smoothHeading(heading);
   }
 
-  /// 平滑方向角度变化
+  /// 平滑方向角度变化并启动动画
   void _smoothHeading(double newHeading) {
     // 处理角度跳跃（例如从359度到1度）
     double diff = newHeading - _smoothedHeading;
@@ -102,7 +125,7 @@ class _CompassWidgetState extends State<CompassWidget>
     }
     
     // 应用低通滤波器
-    const double alpha = 0.1; // 平滑系数
+    const double alpha = 0.15; // 平滑系数，稍微提高响应速度
     _smoothedHeading += diff * alpha;
     
     // 标准化角度
@@ -112,9 +135,61 @@ class _CompassWidgetState extends State<CompassWidget>
       _smoothedHeading -= 360;
     }
     
-    setState(() {
-      _heading = _smoothedHeading;
-    });
+    // 启动动画到新的方向
+    _animateToHeading(_smoothedHeading);
+  }
+  
+  /// 启动方向角度动画
+  void _animateToHeading(double targetHeading) {
+    // 计算最短路径的角度差
+    double currentHeading = _animatedHeading;
+    double diff = targetHeading - currentHeading;
+    
+    // 处理角度跳跃，选择最短路径
+    if (diff > 180) {
+      diff -= 360;
+    } else if (diff < -180) {
+      diff += 360;
+    }
+    
+    // 如果角度变化很小，不需要动画
+    if (diff.abs() < 0.5) {
+      _heading = targetHeading;
+      _animatedHeading = targetHeading;
+      return;
+    }
+    
+    // 设置动画的起始和结束值
+    final double endHeading = currentHeading + diff;
+    
+    // 停止当前动画
+    _animationController.stop();
+    
+    // 创建新的动画
+    _headingAnimation = Tween<double>(
+      begin: currentHeading,
+      end: endHeading,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: _animationCurve,
+    ));
+    
+    // 启动动画
+    _animationController.reset();
+    _animationController.forward();
+  }
+  
+  /// 更新动画值并标准化角度
+  void _updateAnimatedHeading() {
+    double value = _headingAnimation.value;
+    // 标准化角度到0-360度
+    if (value < 0) {
+      value += 360;
+    } else if (value >= 360) {
+      value -= 360;
+    }
+    _animatedHeading = value;
+    _heading = value;
   }
 
   /// 获取当前方向的文字描述
@@ -189,7 +264,7 @@ class _CompassWidgetState extends State<CompassWidget>
             height: 40,
             width: double.infinity,
             child: CustomPaint(
-              painter: CompassScalePainter(_heading),
+              painter: CompassScalePainter(_animatedHeading),
             ),
           ),
         ],
@@ -199,11 +274,29 @@ class _CompassWidgetState extends State<CompassWidget>
 }
 
 /// 指南针刻度绘制器
-/// 绘制方向刻度线，每10度一个短刻度，每30度一个长刻度
+/// 绘制方向刻度线，每5度一个短刻度，每15度一个长刻度
+/// 支持平滑动画过渡效果
 class CompassScalePainter extends CustomPainter {
   final double heading;
   
   CompassScalePainter(this.heading);
+  
+  /// 获取方向对应的颜色
+  Color _getDirectionColor(int angle) {
+    switch (angle) {
+      case 0:
+      case 360:
+        return Colors.red; // 北
+      case 90:
+        return Colors.blue; // 东
+      case 180:
+        return Colors.green; // 南
+      case 270:
+        return Colors.orange; // 西
+      default:
+        return Colors.white;
+    }
+  }
   
   @override
   void paint(Canvas canvas, Size size) {
@@ -219,11 +312,23 @@ class CompassScalePainter extends CustomPainter {
     final centerX = size.width / 2;
     final scaleWidth = size.width * 0.8; // 刻度条宽度
     
-    // 绘制中心指针
+    // 绘制中心指针（带阴影效果）
+    final pointerShadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.3)
+      ..strokeWidth = 4.0;
+    
     final pointerPaint = Paint()
       ..color = Colors.red
       ..strokeWidth = 2.0;
     
+    // 绘制指针阴影
+    canvas.drawLine(
+      Offset(centerX + 1, size.height / 2 - 15 + 1),
+      Offset(centerX + 1, size.height / 2 + 15 + 1),
+      pointerShadowPaint,
+    );
+    
+    // 绘制指针
     canvas.drawLine(
       Offset(centerX, size.height / 2 - 15),
       Offset(centerX, size.height / 2 + 15),
@@ -251,11 +356,17 @@ class CompassScalePainter extends CustomPainter {
       }
       
       if (tickHeight > 0){
+        // 根据方向设置刻度颜色
+        final tickPaint = Paint()
+          ..color = _getDirectionColor(roundedAngle)
+          ..strokeWidth = (angle % 15 == 0) ? 2.0 : 1.0
+          ..style = PaintingStyle.stroke;
+        
         // 绘制刻度线
         canvas.drawLine(
           Offset(x, size.height / 2 - tickHeight / 2),
           Offset(x, size.height / 2 + tickHeight / 2),
-          paint,
+          tickPaint,
         );
       }
       
@@ -294,19 +405,35 @@ class CompassScalePainter extends CustomPainter {
             labelText = '';
         }
         
-        if (labelText.isNotEmpty) { 
+        if (labelText.isNotEmpty) {
+          // 文字阴影
           textPainter.text = TextSpan(
             text: labelText,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Colors.black.withValues(alpha: 0.5),
               fontSize: 10,
               fontFamily: 'monospace',
+              fontWeight: FontWeight.bold,
             ),
           );
           textPainter.layout();
 
           final textX = x - textPainter.width / 2;
           final textY = size.height / 2 + tickHeight / 2 + 2;
+
+          textPainter.paint(canvas, Offset(textX + 1, textY + 1));
+          
+          // 文字主体
+          textPainter.text = TextSpan(
+            text: labelText,
+            style: TextStyle(
+              color: _getDirectionColor(roundedAngle),
+              fontSize: 10,
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.bold,
+            ),
+          );
+          textPainter.layout();
 
           textPainter.paint(canvas, Offset(textX, textY));
         }
