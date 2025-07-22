@@ -24,6 +24,14 @@ VeloMemo is a powerful dash cam application that transforms your smartphone or t
 - **Smart File Naming**: Automatically generates sequential file names based on recording time
 - **Background Recording Optimization**: Automatically dims screen during recording to extend battery life
 
+### 🧭 Intelligent Compass System
+- **Real-time Direction Display**: Shows current heading with both text and numerical degree indicators
+- **Visual Scale Bar**: Horizontal scale with tick marks every 10 degrees (short) and 30 degrees (long)
+- **Direction Labels**: Displays Chinese direction names (北/东/南/西) at cardinal points
+- **Smooth Animation**: Real-time smooth direction updates using magnetometer and accelerometer sensors
+- **Wide View Range**: 180-degree view range (±90 degrees) for comprehensive direction awareness
+- **Color-coded Directions**: Different colors for major directions (North: Red, East: Blue, South: Green, West: Orange)
+
 ### 🎥 Camera Management
 - **Multi-camera Support**: Automatically detects and supports all cameras on the device
 - **Smart Camera Selection**: Prioritizes rear camera for optimal recording results
@@ -67,6 +75,7 @@ VeloMemo is a powerful dash cam application that transforms your smartphone or t
 - **screen_brightness: ^0.2.2+1**: Screen brightness control
 - **package_info_plus: ^4.2.0**: Application information retrieval
 - **intl: ^0.19.0**: Internationalization and date formatting
+- **sensors_plus: ^6.0.1**: Magnetometer and accelerometer sensor access for compass functionality
 
 ### Platform Support
 - **Android**: Full feature support, including native video segmentation
@@ -80,6 +89,7 @@ VeloMemo is a powerful dash cam application that transforms your smartphone or t
 - Real-time storage space display
 - Recording status indicator
 - Smart UI auto-hide
+- Intelligent compass overlay with direction indicators and scale bar
 
 ### File Management Interface
 - Clear file list display
@@ -268,38 +278,73 @@ For more icon-related information, please refer to [ICON_GUIDE.md](ICON_GUIDE.md
 
 ### Project Structure
 ```
-lib/
-├── main.dart              # Application entry and main recording interface
-├── file_list_page.dart     # File management page
-├── settings_page.dart      # Settings page
-├── speed_calculator.dart   # Speed calculator
-├── speed_display_widget.dart # Speed display widget
-├── video_recorder.dart     # Video recorder
-├── video_thumbnail_manager.dart # Video thumbnail management
-└── video_thumbnail_widget.dart # Video thumbnail widget
-
-assets/
-└── icons/                 # Application icon resources
-    ├── app_icon.svg       # Main icon source file
-    ├── app_icon.png       # Main icon PNG
-    ├── app_icon_adaptive.svg # Adaptive icon source file
-    ├── app_icon_adaptive.png # Adaptive icon PNG
-    └── app_icon_foreground.png # Foreground icon PNG
-
-test/
-├── integration_test.dart   # Integration tests
-├── speed_calculator_test.dart # Speed calculator tests
-├── speed_display_widget_test.dart # Speed display widget tests
-├── video_recorder_test.dart # Video recorder tests
-├── video_thumbnail_manager_test.dart # Thumbnail management tests
-└── widget_test.dart        # Basic widget tests
-
-# Development Tools
-├── update_icons.sh         # Icon update script
-├── run_tests.sh           # Test script
+velomemo/
+├── .gitignore              # Git ignore file configuration
+├── .metadata               # Flutter metadata
+├── LICENSE                 # MIT license file
 ├── Makefile               # Development command collection
-├── ICON_GUIDE.md          # Icon design guide
-└── TESTING.md             # Testing guide
+├── README.md              # English project documentation
+├── analysis_options.yaml   # Dart code analysis configuration
+├── devtools_options.yaml   # Flutter DevTools configuration
+├── pubspec.yaml           # Project dependency configuration
+├── pubspec.lock           # Dependency version lock file
+├── example_video_segmentation_usage.dart # Video segmentation usage example
+│
+├── android/               # Android platform configuration
+│   ├── app/
+│   │   ├── build.gradle.kts
+│   │   └── src/
+│   ├── build.gradle.kts
+│   ├── gradle/
+│   ├── gradle.properties
+│   ├── gradlew
+│   ├── gradlew.bat
+│   ├── local.properties
+│   └── settings.gradle.kts
+│
+├── assets/                # Application resource files
+│   └── icons/             # Application icon resources
+│       ├── app_icon.svg   # Main icon source file
+│       ├── app_icon.png   # Main icon PNG
+│       ├── app_icon_adaptive.svg # Adaptive icon source file
+│       ├── app_icon_adaptive.png # Adaptive icon PNG
+│       └── app_icon_foreground.png # Foreground icon PNG
+│
+├── docs/                  # Project documentation
+│   ├── BUILD_GUIDE.md     # Build guide
+│   ├── ICON_GUIDE.md      # Icon design guide
+│   ├── README_zh.md       # Chinese project documentation
+│   └── TESTING.md         # Testing guide
+│
+├── lib/                   # Main source code
+│   ├── main.dart          # Application entry and main recording interface
+│   ├── file_list_page.dart # File management page
+│   ├── settings_page.dart  # Settings page
+│   ├── speed_calculator.dart # Speed calculator
+│   ├── speed_display_widget.dart # Speed display widget
+│   ├── compass_widget.dart # Compass direction indicator widget
+│   ├── video_recorder.dart # Video recorder
+│   ├── video_thumbnail_manager.dart # Video thumbnail management
+│   ├── video_thumbnail_widget.dart # Video thumbnail widget
+│   └── utils.dart         # Utility functions
+│
+├── scripts/               # Build and development scripts
+│   ├── build_apk.bat      # Windows APK build script
+│   ├── build_apk.sh       # macOS/Linux APK build script
+│   ├── run_tests.bat      # Windows test script
+│   ├── run_tests.sh       # macOS/Linux test script
+│   └── update_icons.sh    # Icon update script
+│
+└── test/                  # Test files
+    ├── integration_test.dart # Integration tests
+    ├── speed_calculator_test.dart # Speed calculator tests
+    ├── speed_display_widget_test.dart # Speed display widget tests
+    ├── video_recorder_test.dart # Video recorder tests
+    ├── video_recorder_test.mocks.dart # Video recorder mock objects
+    ├── video_thumbnail_manager_test.dart # Thumbnail management tests
+    ├── video_thumbnail_manager_test.mocks.dart # Thumbnail management mock objects
+    ├── test_utils.dart     # Test utility functions
+    └── widget_test.dart    # Basic widget tests
 ```
 
 ### Key Feature Implementation
@@ -307,6 +352,7 @@ test/
 - **File Management**: Custom file browser supporting various operations
 - **Settings Persistence**: User preference saving using SharedPreferences
 - **Permission Handling**: Smart permission requests and status management
+- **Compass Navigation**: Real-time direction sensing using device magnetometer and accelerometer
 - **UI Optimization**: Responsive design adapting to different screen sizes
 - **Test Coverage**: Complete unit tests, widget tests, and integration tests
 
