@@ -24,13 +24,6 @@ VeloMemo is a powerful dash cam application that transforms your smartphone or t
 - **Smart File Naming**: Automatically generates sequential file names based on recording time
 - **Background Recording Optimization**: Automatically dims screen during recording to extend battery life
 
-### 🧭 Intelligent Compass System
-- **Real-time Direction Display**: Shows current heading with both text and numerical degree indicators
-- **Visual Scale Bar**: Horizontal scale with tick marks every 10 degrees (short) and 30 degrees (long)
-- **Direction Labels**: Displays Chinese direction names (北/东/南/西) at cardinal points
-- **Smooth Animation**: Real-time smooth direction updates using magnetometer and accelerometer sensors
-- **Wide View Range**: 180-degree view range (±90 degrees) for comprehensive direction awareness
-- **Color-coded Directions**: Different colors for major directions (North: Red, East: Blue, South: Green, West: Orange)
 
 ### 🎥 Camera Management
 - **Multi-camera Support**: Automatically detects and supports all cameras on the device
@@ -75,7 +68,8 @@ VeloMemo is a powerful dash cam application that transforms your smartphone or t
 - **screen_brightness: ^0.2.2+1**: Screen brightness control
 - **package_info_plus: ^4.2.0**: Application information retrieval
 - **intl: ^0.19.0**: Internationalization and date formatting
-- **sensors_plus: ^6.0.1**: Magnetometer and accelerometer sensor access for compass functionality
+- **sensors_plus: ^6.0.1**: Accelerometer and gyroscope sensor access for speed calculation enhancement
+
 
 ### Platform Support
 - **Android**: Full feature support, including native video segmentation
@@ -89,7 +83,7 @@ VeloMemo is a powerful dash cam application that transforms your smartphone or t
 - Real-time storage space display
 - Recording status indicator
 - Smart UI auto-hide
-- Intelligent compass overlay with direction indicators and scale bar
+
 
 ### File Management Interface
 - Clear file list display
@@ -322,7 +316,7 @@ velomemo/
 │   ├── settings_page.dart  # Settings page
 │   ├── speed_calculator.dart # Speed calculator
 │   ├── speed_display_widget.dart # Speed display widget
-│   ├── compass_widget.dart # Compass direction indicator widget
+
 │   ├── video_recorder.dart # Video recorder
 │   ├── video_thumbnail_manager.dart # Video thumbnail management
 │   ├── video_thumbnail_widget.dart # Video thumbnail widget
@@ -352,7 +346,7 @@ velomemo/
 - **File Management**: Custom file browser supporting various operations
 - **Settings Persistence**: User preference saving using SharedPreferences
 - **Permission Handling**: Smart permission requests and status management
-- **Compass Navigation**: Real-time direction sensing using device magnetometer and accelerometer
+
 - **UI Optimization**: Responsive design adapting to different screen sizes
 - **Test Coverage**: Complete unit tests, widget tests, and integration tests
 
